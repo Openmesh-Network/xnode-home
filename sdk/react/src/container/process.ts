@@ -8,7 +8,7 @@ import {
 } from "../utils.js";
 import { xnode } from "@openmesh-network/xnode-manager-sdk";
 
-export function useHostProcessLogs({
+export function useContainerProcessLogs({
   client,
   process,
   level,
@@ -77,7 +77,7 @@ export function useHostProcessLogs({
   );
 }
 
-export function useHostProcessStatus({
+export function useContainerProcessStatus({
   client,
   process,
   overrides,
@@ -111,7 +111,7 @@ export function useHostProcessStatus({
   );
 }
 
-export function useHostProcessUsage({
+export function useContainerProcessUsage({
   client,
   process,
   overrides,
@@ -145,7 +145,7 @@ export function useHostProcessUsage({
   );
 }
 
-export function useHostProcessStart(
+export function useContainerProcessStart(
   input: UseMutationInput<
     xnode.host.process.start_input,
     xnode.host.process.start_output
@@ -174,7 +174,7 @@ export function useHostProcessStart(
   );
 }
 
-export function useHostProcessStop(
+export function useContainerProcessStop(
   input: UseMutationInput<
     xnode.host.process.stop_input,
     xnode.host.process.stop_output
@@ -203,7 +203,7 @@ export function useHostProcessStop(
   );
 }
 
-export function useHostProcessRestart(
+export function useContainerProcessRestart(
   input: UseMutationInput<
     xnode.host.process.restart_input,
     xnode.host.process.restart_output
@@ -232,7 +232,7 @@ export function useHostProcessRestart(
   );
 }
 
-export function useHostProcessReload(
+export function useContainerProcessReload(
   input: UseMutationInput<
     xnode.host.process.reload_input,
     xnode.host.process.reload_output

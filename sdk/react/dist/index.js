@@ -18,26 +18,543 @@ function useMutation(options, overrides) {
         },
     });
 }
-async function awaitCommand({ client, command, pollInterval, }) {
-    let status;
-    while (!status || status.running) {
-        await new Promise((resolve) => setTimeout(resolve, pollInterval ?? 1000));
-        status = await xnode.host.process
-            .status({ client, path: { process: command.id } })
-            .catch(() => undefined);
-    }
-}
 
 var utils = /*#__PURE__*/Object.freeze({
     __proto__: null,
-    awaitCommand: awaitCommand,
     useMutation: useMutation,
     useQuery: useQuery
 });
 
+function useContainerConfigGet({ client, container, overrides, }) {
+    return useQuery({
+        queryKey: [
+            client?.baseUrl ?? "",
+            "container",
+            container ?? "",
+            "config",
+            "get",
+        ],
+        enabled: !!client && !!container,
+        queryFn: async () => {
+            if (!client || !container) {
+                return undefined;
+            }
+            return await xnode.container.config.get({
+                client,
+                path: { container },
+            });
+        },
+    }, overrides);
+}
+function useContainerConfigSet(input = {}) {
+    return useMutation({
+        mutationFn: xnode.container.config.set,
+        onSuccess: (_data, { client, path: { container } }, _onMutateResult, { client: queryClient }) => {
+            Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: [client.baseUrl, "container", container, "config", "get"],
+                }),
+            ]);
+        },
+    }, input?.overrides);
+}
+function useContainerConfigVersion({ client, container, overrides, }) {
+    return useQuery({
+        queryKey: [
+            client?.baseUrl ?? "",
+            "container",
+            container ?? "",
+            "config",
+            "version",
+        ],
+        enabled: !!client && !!container,
+        queryFn: async () => {
+            if (!client || !container) {
+                return undefined;
+            }
+            return await xnode.container.config.version({
+                client,
+                path: { container },
+            });
+        },
+    }, overrides);
+}
+function useContainerConfigUpdate(input = {}) {
+    return useMutation({
+        mutationFn: xnode.container.config.update,
+        onSuccess: (_data, { client, path: { container } }, _onMutateResult, { client: queryClient }) => {
+            Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        client.baseUrl,
+                        "container",
+                        container,
+                        "config",
+                        "version",
+                    ],
+                }),
+            ]);
+        },
+    }, input?.overrides);
+}
+function useContainerConfigBuild(input = {}) {
+    return useMutation({
+        mutationFn: xnode.container.config.build,
+    }, input?.overrides);
+}
+function useContainerConfigApply(input = {}) {
+    return useMutation({
+        mutationFn: xnode.container.config.apply,
+    }, input?.overrides);
+}
+
+function useContainerFileMetadata({ client, container, path, overrides, }) {
+    return useQuery({
+        queryKey: [
+            client?.baseUrl ?? "",
+            "container",
+            container ?? "",
+            "file",
+            path ?? "",
+            "metadata",
+        ],
+        enabled: !!client && !!container && !!path,
+        refetchInterval: 10_000, // 10 seconds
+        queryFn: async () => {
+            if (!client || !container || !path) {
+                return undefined;
+            }
+            return await xnode.container.file.metadata({
+                client,
+                path: { container },
+                query: { path },
+            });
+        },
+    }, overrides);
+}
+function useContainerFileSize({ client, container, path, overrides, }) {
+    return useQuery({
+        queryKey: [
+            client?.baseUrl ?? "",
+            "container",
+            container ?? "",
+            "file",
+            path ?? "",
+            "size",
+        ],
+        enabled: !!client && !!container && !!path,
+        refetchInterval: 10_000, // 10 seconds
+        queryFn: async () => {
+            if (!client || !container || !path) {
+                return undefined;
+            }
+            return await xnode.container.file.size({
+                client,
+                path: { container },
+                query: { path },
+            });
+        },
+    }, overrides);
+}
+function useContainerFileMove(input = {}) {
+    return useMutation({
+        mutationFn: xnode.container.file.move,
+        onSuccess: (_data, { client, path: { container }, data: { source, destination } }, _onMutateResult, { client: queryClient }) => {
+            Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: [client.baseUrl, "container", container, "file", source],
+                }),
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        client.baseUrl,
+                        "container",
+                        container,
+                        "file",
+                        destination,
+                    ],
+                }),
+            ]);
+        },
+    }, input?.overrides);
+}
+function useContainerFileRemove(input = {}) {
+    return useMutation({
+        mutationFn: xnode.container.file.remove,
+        onSuccess: (_data, { client, path: { container }, query: { path } }, _onMutateResult, { client: queryClient }) => {
+            Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: [client.baseUrl, "container", container, "file", path],
+                }),
+            ]);
+        },
+    }, input?.overrides);
+}
+function useContainerFileCopy(input = {}) {
+    return useMutation({
+        mutationFn: xnode.container.file.copy,
+        onSuccess: (_data, { client, path: { container }, data: { destination } }, _onMutateResult, { client: queryClient }) => {
+            Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        client.baseUrl,
+                        "container",
+                        container,
+                        "file",
+                        destination,
+                    ],
+                }),
+            ]);
+        },
+    }, input?.overrides);
+}
+function useContainerFileReadFile({ client, container, path, overrides, }) {
+    return useQuery({
+        queryKey: [
+            client?.baseUrl ?? "",
+            "container",
+            container ?? "",
+            "file",
+            path ?? "",
+            "file",
+            "read",
+        ],
+        enabled: !!client && !!container && !!path,
+        refetchInterval: 10_000, // 10 seconds
+        queryFn: async () => {
+            if (!client || !container || !path) {
+                return undefined;
+            }
+            return await xnode.container.file.read_file({
+                client,
+                path: { container },
+                query: { path },
+            });
+        },
+    }, overrides);
+}
+function useContainerFileWriteFile(input = {}) {
+    return useMutation({
+        mutationFn: xnode.container.file.write_file,
+        onSuccess: (_data, { client, path: { container }, query: { path } }, _onMutateResult, { client: queryClient }) => {
+            Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: [client.baseUrl, "container", container, "file", path],
+                }),
+            ]);
+        },
+    }, input?.overrides);
+}
+function useContainerFileReadFolder({ client, container, path, metadata, overrides, }) {
+    return useQuery({
+        queryKey: [
+            client?.baseUrl ?? "",
+            "container",
+            container ?? "",
+            "file",
+            path ?? "",
+            "folder",
+            "read",
+            metadata ?? false,
+        ],
+        enabled: !!client && !!container && !!path,
+        refetchInterval: 10_000, // 10 seconds
+        queryFn: async () => {
+            if (!client || !container || !path) {
+                return undefined;
+            }
+            return await xnode.container.file.read_folder({
+                client,
+                path: { container },
+                query: { path, metadata: metadata ?? null },
+            });
+        },
+    }, overrides);
+}
+function useContainerFileCreateFolder(input = {}) {
+    return useMutation({
+        mutationFn: xnode.container.file.create_folder,
+        onSuccess: (_data, { client, path: { container }, query: { path } }, _onMutateResult, { client: queryClient }) => {
+            Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: [client.baseUrl, "container", container, "file", path],
+                }),
+            ]);
+        },
+    }, input?.overrides);
+}
+function useContainerFileReadLink({ client, container, path, overrides, }) {
+    return useQuery({
+        queryKey: [
+            client?.baseUrl ?? "",
+            "container",
+            container ?? "",
+            "file",
+            path ?? "",
+            "link",
+            "read",
+        ],
+        enabled: !!client && !!container && !!path,
+        refetchInterval: 10_000, // 10 seconds
+        queryFn: async () => {
+            if (!client || !container || !path) {
+                return undefined;
+            }
+            return await xnode.container.file.read_link({
+                client,
+                path: { container },
+                query: { path },
+            });
+        },
+    }, overrides);
+}
+function useContainerFileGetPermissions({ client, container, path, overrides, }) {
+    return useQuery({
+        queryKey: [
+            client?.baseUrl ?? "",
+            "container",
+            container ?? "",
+            "file",
+            path ?? "",
+            "permissions",
+            "read",
+        ],
+        enabled: !!client && !!container && !!path,
+        refetchInterval: 10_000, // 10 seconds
+        queryFn: async () => {
+            if (!client || !container || !path) {
+                return undefined;
+            }
+            return await xnode.container.file.get_permissions({
+                client,
+                path: { container },
+                query: { path },
+            });
+        },
+    }, overrides);
+}
+function useContainerFileSetPermissions(input = {}) {
+    return useMutation({
+        mutationFn: xnode.container.file.set_permissions,
+        onSuccess: (_data, { client, path: { container }, query: { path } }, _onMutateResult, { client: queryClient }) => {
+            Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        client.baseUrl,
+                        "container",
+                        container,
+                        "file",
+                        path,
+                        "permissions",
+                        "read",
+                    ],
+                }),
+            ]);
+        },
+    }, input?.overrides);
+}
+
+function useContainerInfoUsersUsers({ client, overrides, }) {
+    return useQuery({
+        queryKey: [client?.baseUrl ?? "", "host", "info", "users", "users"],
+        enabled: !!client,
+        refetchInterval: 60_000, // 1 minute
+        queryFn: async () => {
+            if (!client) {
+                return undefined;
+            }
+            return await xnode.host.info.users.users({
+                client,
+            });
+        },
+    }, overrides);
+}
+function useContainerInfoUsersGroups({ client, overrides, }) {
+    return useQuery({
+        queryKey: [client?.baseUrl ?? "", "host", "info", "users", "groups"],
+        enabled: !!client,
+        refetchInterval: 60_000, // 1 minute
+        queryFn: async () => {
+            if (!client) {
+                return undefined;
+            }
+            return await xnode.host.info.users.groups({
+                client,
+            });
+        },
+    }, overrides);
+}
+
+function useContainerListProcess({ client, overrides, }) {
+    return useQuery({
+        queryKey: [client?.baseUrl ?? "", "host", "list", "process"],
+        enabled: !!client,
+        refetchInterval: 10_000, // 10 seconds
+        queryFn: async () => {
+            if (!client) {
+                return undefined;
+            }
+            return await xnode.host.list.process({
+                client,
+            });
+        },
+    }, overrides);
+}
+
+function useContainerProcessLogs({ client, process, level, max, overrides, }) {
+    return useQuery({
+        queryKey: [
+            client?.baseUrl ?? "",
+            "host",
+            "process",
+            process ?? "",
+            "logs",
+            level ?? "",
+            max ?? 0,
+        ],
+        enabled: !!client && !!process,
+        refetchInterval: 1000,
+        queryFn: async ({ client: queryClient }) => {
+            if (!client || !process)
+                return [];
+            const previous = queryClient.getQueryData([
+                "host",
+                "process",
+                "logs",
+                client.baseUrl,
+                process,
+                level ?? "",
+                max ?? 0,
+            ]) ?? [];
+            // All logs before this timestamp we've already received
+            const lastTimestamp = previous.length > 1
+                ? previous[previous.length - 1]?.timestamp
+                : undefined;
+            // We only retain the logs from before this log, this log and everything after will be resent
+            const firstLogOfTimestamp = lastTimestamp !== undefined
+                ? previous.findIndex((log) => log.timestamp === lastTimestamp)
+                : 0;
+            const next = await xnode.host.process.logs({
+                client,
+                path: { process },
+                query: {
+                    after: lastTimestamp ?? null,
+                    level: level ?? null,
+                    max: max ?? null,
+                },
+            });
+            return [...previous.slice(0, firstLogOfTimestamp), ...next].slice(max ? -max : undefined);
+        },
+    }, overrides);
+}
+function useContainerProcessStatus({ client, process, overrides, }) {
+    return useQuery({
+        queryKey: [
+            client?.baseUrl ?? "",
+            "host",
+            "process",
+            process ?? "",
+            "status",
+        ],
+        enabled: !!client && !!process,
+        refetchInterval: 1_000, // 1 second
+        queryFn: async () => {
+            if (!client || !process) {
+                return undefined;
+            }
+            return await xnode.host.process.status({
+                client,
+                path: { process },
+            });
+        },
+    }, overrides);
+}
+function useContainerProcessUsage({ client, process, overrides, }) {
+    return useQuery({
+        queryKey: [
+            client?.baseUrl ?? "",
+            "host",
+            "process",
+            process ?? "",
+            "usage",
+        ],
+        enabled: !!client && !!process,
+        refetchInterval: 1_000, // 1 second
+        queryFn: async () => {
+            if (!client || !process) {
+                return undefined;
+            }
+            return await xnode.host.process.usage({
+                client,
+                path: { process },
+            });
+        },
+    }, overrides);
+}
+function useContainerProcessStart(input = {}) {
+    return useMutation({
+        mutationFn: xnode.host.process.start,
+        onSuccess: (_data, { client, path: { process } }, _onMutateResult, { client: queryClient }) => {
+            Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: [client.baseUrl, "host", "process", process],
+                }),
+            ]);
+        },
+    }, input?.overrides);
+}
+function useContainerProcessStop(input = {}) {
+    return useMutation({
+        mutationFn: xnode.host.process.stop,
+        onSuccess: (_data, { client, path: { process } }, _onMutateResult, { client: queryClient }) => {
+            Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: [client.baseUrl, "host", "process", process],
+                }),
+            ]);
+        },
+    }, input?.overrides);
+}
+function useContainerProcessRestart(input = {}) {
+    return useMutation({
+        mutationFn: xnode.host.process.restart,
+        onSuccess: (_data, { client, path: { process } }, _onMutateResult, { client: queryClient }) => {
+            Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: [client.baseUrl, "host", "process", process],
+                }),
+            ]);
+        },
+    }, input?.overrides);
+}
+function useContainerProcessReload(input = {}) {
+    return useMutation({
+        mutationFn: xnode.host.process.reload,
+        onSuccess: (_data, { client, path: { process } }, _onMutateResult, { client: queryClient }) => {
+            Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: [client.baseUrl, "host", "process", process],
+                }),
+            ]);
+        },
+    }, input?.overrides);
+}
+
+function useContainerRemove(input = {}) {
+    return useMutation({
+        mutationFn: xnode.container.remove,
+        onSuccess: (_data, { client, path: { container } }, _onMutateResult, { client: queryClient }) => {
+            Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: [client.baseUrl, "container", container],
+                }),
+            ]);
+        },
+    }, input?.overrides);
+}
+
 function useHostConfigGet({ client, overrides, }) {
     return useQuery({
-        queryKey: ["host", "config", "get", client?.baseUrl ?? ""],
+        queryKey: [client?.baseUrl ?? "", "host", "config", "get"],
         enabled: !!client,
         queryFn: async () => {
             if (!client) {
@@ -55,7 +572,7 @@ function useHostConfigSet(input = {}) {
         onSuccess: (_data, { client }, _onMutateResult, { client: queryClient }) => {
             Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey: ["host", "config", "get", client.baseUrl],
+                    queryKey: [client.baseUrl, "host", "config", "get"],
                 }),
             ]);
         },
@@ -63,7 +580,7 @@ function useHostConfigSet(input = {}) {
 }
 function useHostConfigVersion({ client, overrides, }) {
     return useQuery({
-        queryKey: ["host", "config", "version", client?.baseUrl ?? ""],
+        queryKey: [client?.baseUrl ?? "", "host", "config", "version"],
         enabled: !!client,
         queryFn: async () => {
             if (!client) {
@@ -81,7 +598,7 @@ function useHostConfigUpdate(input = {}) {
         onSuccess: (_data, { client }, _onMutateResult, { client: queryClient }) => {
             Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey: ["host", "config", "version", client.baseUrl],
+                    queryKey: [client.baseUrl, "host", "config", "version"],
                 }),
             ]);
         },
@@ -100,7 +617,7 @@ function useHostConfigApply(input = {}) {
 
 function useHostFileMetadata({ client, path, overrides, }) {
     return useQuery({
-        queryKey: ["host", "file", "metadata", client?.baseUrl ?? "", path ?? ""],
+        queryKey: [client?.baseUrl ?? "", "host", "file", path ?? "", "metadata"],
         enabled: !!client && !!path,
         refetchInterval: 10_000, // 10 seconds
         queryFn: async () => {
@@ -116,7 +633,7 @@ function useHostFileMetadata({ client, path, overrides, }) {
 }
 function useHostFileSize({ client, path, overrides, }) {
     return useQuery({
-        queryKey: ["host", "file", "size", client?.baseUrl ?? "", path ?? ""],
+        queryKey: [client?.baseUrl ?? "", "host", "file", path ?? "", "size"],
         enabled: !!client && !!path,
         refetchInterval: 10_000, // 10 seconds
         queryFn: async () => {
@@ -136,10 +653,10 @@ function useHostFileMove(input = {}) {
         onSuccess: (_data, { client, data: { source, destination } }, _onMutateResult, { client: queryClient }) => {
             Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey: ["host", "file", client.baseUrl, source],
+                    queryKey: [client.baseUrl, "host", "file", source],
                 }),
                 queryClient.invalidateQueries({
-                    queryKey: ["host", "file", client.baseUrl, destination],
+                    queryKey: [client.baseUrl, "host", "file", destination],
                 }),
             ]);
         },
@@ -151,7 +668,7 @@ function useHostFileRemove(input = {}) {
         onSuccess: (_data, { client, query: { path } }, _onMutateResult, { client: queryClient }) => {
             Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey: ["host", "file", client.baseUrl, path],
+                    queryKey: [client.baseUrl, "host", "file", path],
                 }),
             ]);
         },
@@ -163,7 +680,7 @@ function useHostFileCopy(input = {}) {
         onSuccess: (_data, { client, data: { destination } }, _onMutateResult, { client: queryClient }) => {
             Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey: ["host", "file", client.baseUrl, destination],
+                    queryKey: [client.baseUrl, "host", "file", destination],
                 }),
             ]);
         },
@@ -172,12 +689,12 @@ function useHostFileCopy(input = {}) {
 function useHostFileReadFile({ client, path, overrides, }) {
     return useQuery({
         queryKey: [
+            client?.baseUrl ?? "",
             "host",
             "file",
-            "read",
-            "file",
-            client?.baseUrl ?? "",
             path ?? "",
+            "file",
+            "read",
         ],
         enabled: !!client && !!path,
         refetchInterval: 10_000, // 10 seconds
@@ -198,7 +715,7 @@ function useHostFileWriteFile(input = {}) {
         onSuccess: (_data, { client, query: { path } }, _onMutateResult, { client: queryClient }) => {
             Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey: ["host", "file", client.baseUrl, path],
+                    queryKey: [client.baseUrl, "host", "file", path],
                 }),
             ]);
         },
@@ -207,12 +724,12 @@ function useHostFileWriteFile(input = {}) {
 function useHostFileReadFolder({ client, path, metadata, overrides, }) {
     return useQuery({
         queryKey: [
+            client?.baseUrl ?? "",
             "host",
             "file",
-            "read",
-            "folder",
-            client?.baseUrl ?? "",
             path ?? "",
+            "folder",
+            "read",
             metadata ?? false,
         ],
         enabled: !!client && !!path,
@@ -234,7 +751,7 @@ function useHostFileCreateFolder(input = {}) {
         onSuccess: (_data, { client, query: { path } }, _onMutateResult, { client: queryClient }) => {
             Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey: ["host", "file", client.baseUrl, path],
+                    queryKey: [client.baseUrl, "host", "file", path],
                 }),
             ]);
         },
@@ -243,12 +760,12 @@ function useHostFileCreateFolder(input = {}) {
 function useHostFileReadLink({ client, path, overrides, }) {
     return useQuery({
         queryKey: [
+            client?.baseUrl ?? "",
             "host",
             "file",
-            "read",
-            "link",
-            client?.baseUrl ?? "",
             path ?? "",
+            "link",
+            "read",
         ],
         enabled: !!client && !!path,
         refetchInterval: 10_000, // 10 seconds
@@ -266,12 +783,12 @@ function useHostFileReadLink({ client, path, overrides, }) {
 function useHostFileGetPermissions({ client, path, overrides, }) {
     return useQuery({
         queryKey: [
+            client?.baseUrl ?? "",
             "host",
             "file",
-            "read",
-            "permissions",
-            client?.baseUrl ?? "",
             path ?? "",
+            "permissions",
+            "read",
         ],
         enabled: !!client && !!path,
         refetchInterval: 10_000, // 10 seconds
@@ -293,12 +810,12 @@ function useHostFileSetPermissions(input = {}) {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [
+                        client.baseUrl,
                         "host",
                         "file",
-                        "read",
-                        "permissions",
-                        client.baseUrl,
                         path,
+                        "permissions",
+                        "read",
                     ],
                 }),
             ]);
@@ -309,12 +826,12 @@ function useHostFileSetPermissions(input = {}) {
 function useHostInfoFlakeMetadata({ client, flake, overrides, }) {
     return useQuery({
         queryKey: [
+            client?.baseUrl ?? "",
             "host",
             "info",
             "flake",
-            "metadata",
-            client?.baseUrl ?? "",
             flake ?? "",
+            "metadata",
         ],
         enabled: !!client && !!flake,
         refetchInterval: 60_000, // 1 minute
@@ -332,10 +849,10 @@ function useHostInfoFlakeMetadata({ client, flake, overrides, }) {
 function useHostInfoEval({ client, statement, overrides, }) {
     return useQuery({
         queryKey: [
+            client?.baseUrl ?? "",
             "host",
             "info",
             "eval",
-            client?.baseUrl ?? "",
             statement ?? "",
         ],
         enabled: !!client && !!statement,
@@ -353,7 +870,7 @@ function useHostInfoEval({ client, statement, overrides, }) {
 }
 function useHostInfoUsersUsers({ client, overrides, }) {
     return useQuery({
-        queryKey: ["host", "info", "users", "users", client?.baseUrl ?? ""],
+        queryKey: [client?.baseUrl ?? "", "host", "info", "users", "users"],
         enabled: !!client,
         refetchInterval: 60_000, // 1 minute
         queryFn: async () => {
@@ -368,7 +885,7 @@ function useHostInfoUsersUsers({ client, overrides, }) {
 }
 function useHostInfoUsersGroups({ client, overrides, }) {
     return useQuery({
-        queryKey: ["host", "info", "users", "groups", client?.baseUrl ?? ""],
+        queryKey: [client?.baseUrl ?? "", "host", "info", "users", "groups"],
         enabled: !!client,
         refetchInterval: 60_000, // 1 minute
         queryFn: async () => {
@@ -384,7 +901,7 @@ function useHostInfoUsersGroups({ client, overrides, }) {
 
 function useHostListProcess({ client, overrides, }) {
     return useQuery({
-        queryKey: ["host", "list", "process", client?.baseUrl ?? ""],
+        queryKey: [client?.baseUrl ?? "", "host", "list", "process"],
         enabled: !!client,
         refetchInterval: 10_000, // 10 seconds
         queryFn: async () => {
@@ -399,7 +916,7 @@ function useHostListProcess({ client, overrides, }) {
 }
 function useHostListContainer({ client, overrides, }) {
     return useQuery({
-        queryKey: ["host", "list", "container", client?.baseUrl ?? ""],
+        queryKey: [client?.baseUrl ?? "", "host", "list", "container"],
         enabled: !!client,
         refetchInterval: 10_000, // 10 seconds
         queryFn: async () => {
@@ -427,11 +944,11 @@ function useHostPowerReboot(input = {}) {
 function useHostProcessLogs({ client, process, level, max, overrides, }) {
     return useQuery({
         queryKey: [
+            client?.baseUrl ?? "",
             "host",
             "process",
-            "logs",
-            client?.baseUrl ?? "",
             process ?? "",
+            "logs",
             level ?? "",
             max ?? 0,
         ],
@@ -473,11 +990,11 @@ function useHostProcessLogs({ client, process, level, max, overrides, }) {
 function useHostProcessStatus({ client, process, overrides, }) {
     return useQuery({
         queryKey: [
+            client?.baseUrl ?? "",
             "host",
             "process",
-            "status",
-            client?.baseUrl ?? "",
             process ?? "",
+            "status",
         ],
         enabled: !!client && !!process,
         refetchInterval: 1_000, // 1 second
@@ -495,11 +1012,11 @@ function useHostProcessStatus({ client, process, overrides, }) {
 function useHostProcessUsage({ client, process, overrides, }) {
     return useQuery({
         queryKey: [
+            client?.baseUrl ?? "",
             "host",
             "process",
-            "usage",
-            client?.baseUrl ?? "",
             process ?? "",
+            "usage",
         ],
         enabled: !!client && !!process,
         refetchInterval: 1_000, // 1 second
@@ -520,7 +1037,7 @@ function useHostProcessStart(input = {}) {
         onSuccess: (_data, { client, path: { process } }, _onMutateResult, { client: queryClient }) => {
             Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey: ["host", "process", client.baseUrl, process],
+                    queryKey: [client.baseUrl, "host", "process", process],
                 }),
             ]);
         },
@@ -532,7 +1049,7 @@ function useHostProcessStop(input = {}) {
         onSuccess: (_data, { client, path: { process } }, _onMutateResult, { client: queryClient }) => {
             Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey: ["host", "process", client.baseUrl, process],
+                    queryKey: [client.baseUrl, "host", "process", process],
                 }),
             ]);
         },
@@ -544,7 +1061,7 @@ function useHostProcessRestart(input = {}) {
         onSuccess: (_data, { client, path: { process } }, _onMutateResult, { client: queryClient }) => {
             Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey: ["host", "process", client.baseUrl, process],
+                    queryKey: [client.baseUrl, "host", "process", process],
                 }),
             ]);
         },
@@ -556,7 +1073,7 @@ function useHostProcessReload(input = {}) {
         onSuccess: (_data, { client, path: { process } }, _onMutateResult, { client: queryClient }) => {
             Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey: ["host", "process", client.baseUrl, process],
+                    queryKey: [client.baseUrl, "host", "process", process],
                 }),
             ]);
         },
@@ -565,7 +1082,7 @@ function useHostProcessReload(input = {}) {
 
 function useHostUsageCpu({ client, overrides, }) {
     return useQuery({
-        queryKey: ["host", "usage", "cpu", client?.baseUrl ?? ""],
+        queryKey: [client?.baseUrl ?? "", "host", "usage", "cpu"],
         enabled: !!client,
         refetchInterval: 1_000, // 1 second
         queryFn: async () => {
@@ -580,7 +1097,7 @@ function useHostUsageCpu({ client, overrides, }) {
 }
 function useHostUsageMemory({ client, overrides, }) {
     return useQuery({
-        queryKey: ["host", "usage", "memory", client?.baseUrl ?? ""],
+        queryKey: [client?.baseUrl ?? "", "host", "usage", "memory"],
         enabled: !!client,
         refetchInterval: 1_000, // 1 second
         queryFn: async () => {
@@ -595,7 +1112,7 @@ function useHostUsageMemory({ client, overrides, }) {
 }
 function useHostUsageDisk({ client, overrides, }) {
     return useQuery({
-        queryKey: ["host", "usage", "disk", client?.baseUrl ?? ""],
+        queryKey: [client?.baseUrl ?? "", "host", "usage", "disk"],
         enabled: !!client,
         refetchInterval: 1_000, // 1 second
         queryFn: async () => {
@@ -610,7 +1127,7 @@ function useHostUsageDisk({ client, overrides, }) {
 }
 function useHostUsageNetwork({ client, overrides, }) {
     return useQuery({
-        queryKey: ["host", "usage", "network", client?.baseUrl ?? ""],
+        queryKey: [client?.baseUrl ?? "", "host", "usage", "network"],
         enabled: !!client,
         refetchInterval: 1_000, // 1 second
         queryFn: async () => {
@@ -625,7 +1142,7 @@ function useHostUsageNetwork({ client, overrides, }) {
 }
 function useHostUsageGpu({ client, overrides, }) {
     return useQuery({
-        queryKey: ["host", "usage", "gpu", client?.baseUrl ?? ""],
+        queryKey: [client?.baseUrl ?? "", "host", "usage", "gpu"],
         enabled: !!client,
         refetchInterval: 1_000, // 1 second
         queryFn: async () => {
@@ -639,4 +1156,4 @@ function useHostUsageGpu({ client, overrides, }) {
     }, overrides);
 }
 
-export { useHostConfigApply, useHostConfigBuild, useHostConfigGet, useHostConfigSet, useHostConfigUpdate, useHostConfigVersion, useHostFileCopy, useHostFileCreateFolder, useHostFileGetPermissions, useHostFileMetadata, useHostFileMove, useHostFileReadFile, useHostFileReadFolder, useHostFileReadLink, useHostFileRemove, useHostFileSetPermissions, useHostFileSize, useHostFileWriteFile, useHostInfoEval, useHostInfoFlakeMetadata, useHostInfoUsersGroups, useHostInfoUsersUsers, useHostListContainer, useHostListProcess, useHostPowerOff, useHostPowerReboot, useHostProcessLogs, useHostProcessReload, useHostProcessRestart, useHostProcessStart, useHostProcessStatus, useHostProcessStop, useHostProcessUsage, useHostUsageCpu, useHostUsageDisk, useHostUsageGpu, useHostUsageMemory, useHostUsageNetwork, utils };
+export { useContainerConfigApply, useContainerConfigBuild, useContainerConfigGet, useContainerConfigSet, useContainerConfigUpdate, useContainerConfigVersion, useContainerFileCopy, useContainerFileCreateFolder, useContainerFileGetPermissions, useContainerFileMetadata, useContainerFileMove, useContainerFileReadFile, useContainerFileReadFolder, useContainerFileReadLink, useContainerFileRemove, useContainerFileSetPermissions, useContainerFileSize, useContainerFileWriteFile, useContainerInfoUsersGroups, useContainerInfoUsersUsers, useContainerListProcess, useContainerProcessLogs, useContainerProcessReload, useContainerProcessRestart, useContainerProcessStart, useContainerProcessStatus, useContainerProcessStop, useContainerProcessUsage, useContainerRemove, useHostConfigApply, useHostConfigBuild, useHostConfigGet, useHostConfigSet, useHostConfigUpdate, useHostConfigVersion, useHostFileCopy, useHostFileCreateFolder, useHostFileGetPermissions, useHostFileMetadata, useHostFileMove, useHostFileReadFile, useHostFileReadFolder, useHostFileReadLink, useHostFileRemove, useHostFileSetPermissions, useHostFileSize, useHostFileWriteFile, useHostInfoEval, useHostInfoFlakeMetadata, useHostInfoUsersGroups, useHostInfoUsersUsers, useHostListContainer, useHostListProcess, useHostPowerOff, useHostPowerReboot, useHostProcessLogs, useHostProcessReload, useHostProcessRestart, useHostProcessStart, useHostProcessStatus, useHostProcessStop, useHostProcessUsage, useHostUsageCpu, useHostUsageDisk, useHostUsageGpu, useHostUsageMemory, useHostUsageNetwork, utils };

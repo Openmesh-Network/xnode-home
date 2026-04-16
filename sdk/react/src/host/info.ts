@@ -12,12 +12,12 @@ export function useHostInfoFlakeMetadata({
   return useQuery(
     {
       queryKey: [
+        client?.baseUrl ?? "",
         "host",
         "info",
         "flake",
-        "metadata",
-        client?.baseUrl ?? "",
         flake ?? "",
+        "metadata",
       ],
       enabled: !!client && !!flake,
       refetchInterval: 60_000, // 1 minute
@@ -47,10 +47,10 @@ export function useHostInfoEval({
   return useQuery(
     {
       queryKey: [
+        client?.baseUrl ?? "",
         "host",
         "info",
         "eval",
-        client?.baseUrl ?? "",
         statement ?? "",
       ],
       enabled: !!client && !!statement,
@@ -79,7 +79,7 @@ export function useHostInfoUsersUsers({
 >): UseQueryOutput<xnode.host.info.users.users_output> {
   return useQuery(
     {
-      queryKey: ["host", "info", "users", "users", client?.baseUrl ?? ""],
+      queryKey: [client?.baseUrl ?? "", "host", "info", "users", "users"],
       enabled: !!client,
       refetchInterval: 60_000, // 1 minute
       queryFn: async () => {
@@ -105,7 +105,7 @@ export function useHostInfoUsersGroups({
 >): UseQueryOutput<xnode.host.info.users.groups_output> {
   return useQuery(
     {
-      queryKey: ["host", "info", "users", "groups", client?.baseUrl ?? ""],
+      queryKey: [client?.baseUrl ?? "", "host", "info", "users", "groups"],
       enabled: !!client,
       refetchInterval: 60_000, // 1 minute
       queryFn: async () => {

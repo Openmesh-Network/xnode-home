@@ -18,7 +18,7 @@ export function useHostFileMetadata({
 >): UseQueryOutput<xnode.host.file.metadata_output> {
   return useQuery(
     {
-      queryKey: ["host", "file", "metadata", client?.baseUrl ?? "", path ?? ""],
+      queryKey: [client?.baseUrl ?? "", "host", "file", path ?? "", "metadata"],
       enabled: !!client && !!path,
       refetchInterval: 10_000, // 10 seconds
       queryFn: async () => {
@@ -46,7 +46,7 @@ export function useHostFileSize({
 >): UseQueryOutput<xnode.host.file.size_output> {
   return useQuery(
     {
-      queryKey: ["host", "file", "size", client?.baseUrl ?? "", path ?? ""],
+      queryKey: [client?.baseUrl ?? "", "host", "file", path ?? "", "size"],
       enabled: !!client && !!path,
       refetchInterval: 10_000, // 10 seconds
       queryFn: async () => {
@@ -81,10 +81,10 @@ export function useHostFileMove(
       ) => {
         Promise.all([
           queryClient.invalidateQueries({
-            queryKey: ["host", "file", client.baseUrl, source],
+            queryKey: [client.baseUrl, "host", "file", source],
           }),
           queryClient.invalidateQueries({
-            queryKey: ["host", "file", client.baseUrl, destination],
+            queryKey: [client.baseUrl, "host", "file", destination],
           }),
         ]);
       },
@@ -113,7 +113,7 @@ export function useHostFileRemove(
       ) => {
         Promise.all([
           queryClient.invalidateQueries({
-            queryKey: ["host", "file", client.baseUrl, path],
+            queryKey: [client.baseUrl, "host", "file", path],
           }),
         ]);
       },
@@ -139,7 +139,7 @@ export function useHostFileCopy(
       ) => {
         Promise.all([
           queryClient.invalidateQueries({
-            queryKey: ["host", "file", client.baseUrl, destination],
+            queryKey: [client.baseUrl, "host", "file", destination],
           }),
         ]);
       },
@@ -159,12 +159,12 @@ export function useHostFileReadFile({
   return useQuery(
     {
       queryKey: [
+        client?.baseUrl ?? "",
         "host",
         "file",
-        "read",
-        "file",
-        client?.baseUrl ?? "",
         path ?? "",
+        "file",
+        "read",
       ],
       enabled: !!client && !!path,
       refetchInterval: 10_000, // 10 seconds
@@ -203,7 +203,7 @@ export function useHostFileWriteFile(
       ) => {
         Promise.all([
           queryClient.invalidateQueries({
-            queryKey: ["host", "file", client.baseUrl, path],
+            queryKey: [client.baseUrl, "host", "file", path],
           }),
         ]);
       },
@@ -224,12 +224,12 @@ export function useHostFileReadFolder({
   return useQuery(
     {
       queryKey: [
+        client?.baseUrl ?? "",
         "host",
         "file",
-        "read",
-        "folder",
-        client?.baseUrl ?? "",
         path ?? "",
+        "folder",
+        "read",
         metadata ?? false,
       ],
       enabled: !!client && !!path,
@@ -269,7 +269,7 @@ export function useHostFileCreateFolder(
       ) => {
         Promise.all([
           queryClient.invalidateQueries({
-            queryKey: ["host", "file", client.baseUrl, path],
+            queryKey: [client.baseUrl, "host", "file", path],
           }),
         ]);
       },
@@ -289,12 +289,12 @@ export function useHostFileReadLink({
   return useQuery(
     {
       queryKey: [
+        client?.baseUrl ?? "",
         "host",
         "file",
-        "read",
-        "link",
-        client?.baseUrl ?? "",
         path ?? "",
+        "link",
+        "read",
       ],
       enabled: !!client && !!path,
       refetchInterval: 10_000, // 10 seconds
@@ -324,12 +324,12 @@ export function useHostFileGetPermissions({
   return useQuery(
     {
       queryKey: [
+        client?.baseUrl ?? "",
         "host",
         "file",
-        "read",
-        "permissions",
-        client?.baseUrl ?? "",
         path ?? "",
+        "permissions",
+        "read",
       ],
       enabled: !!client && !!path,
       refetchInterval: 10_000, // 10 seconds
@@ -369,12 +369,12 @@ export function useHostFileSetPermissions(
         Promise.all([
           queryClient.invalidateQueries({
             queryKey: [
+              client.baseUrl,
               "host",
               "file",
-              "read",
-              "permissions",
-              client.baseUrl,
               path,
+              "permissions",
+              "read",
             ],
           }),
         ]);

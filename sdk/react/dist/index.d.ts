@@ -18,11 +18,6 @@ type UseMutationInput<Input, Output> = {
 };
 type UseMutationOutput<Input, Output> = UseMutationResult<Output, Error, Input>;
 declare function useMutation<Input, Output>(options: UseMutationOptions<Output, Error, Input>, overrides: MutationOverrides<Input, Output> | undefined): UseMutationOutput<Input, Output>;
-declare function awaitCommand({ client, command, pollInterval, }: {
-    client: xnode.common.utils.client.Client;
-    command: xnode.common.command.ResponseCommand;
-    pollInterval?: number;
-}): Promise<void>;
 
 type utils_d_MutationOverrides<Input, Output> = MutationOverrides<Input, Output>;
 type utils_d_QueryOverrides<Output> = QueryOverrides<Output>;
@@ -34,13 +29,47 @@ type utils_d_UseQueryInput<Input extends {
     query?: Query;
 }, Output, Path = {}, Query = {}> = UseQueryInput<Input, Output, Path, Query>;
 type utils_d_UseQueryOutput<Data> = UseQueryOutput<Data>;
-declare const utils_d_awaitCommand: typeof awaitCommand;
 declare const utils_d_useMutation: typeof useMutation;
 declare const utils_d_useQuery: typeof useQuery;
 declare namespace utils_d {
-  export { utils_d_awaitCommand as awaitCommand, utils_d_useMutation as useMutation, utils_d_useQuery as useQuery };
+  export { utils_d_useMutation as useMutation, utils_d_useQuery as useQuery };
   export type { utils_d_MutationOverrides as MutationOverrides, utils_d_QueryOverrides as QueryOverrides, utils_d_UseMutationInput as UseMutationInput, utils_d_UseMutationOutput as UseMutationOutput, utils_d_UseQueryInput as UseQueryInput, utils_d_UseQueryOutput as UseQueryOutput };
 }
+
+declare function useContainerConfigGet({ client, container, overrides, }: UseQueryInput<xnode.container.config.get_input, xnode.container.config.get_output>): UseQueryOutput<xnode.container.config.get_output>;
+declare function useContainerConfigSet(input?: UseMutationInput<xnode.container.config.set_input, xnode.container.config.set_output>): UseMutationOutput<xnode.container.config.set_input, xnode.container.config.set_output>;
+declare function useContainerConfigVersion({ client, container, overrides, }: UseQueryInput<xnode.container.config.version_input, xnode.container.config.version_output>): UseQueryOutput<xnode.container.config.version_output>;
+declare function useContainerConfigUpdate(input?: UseMutationInput<xnode.container.config.update_input, xnode.container.config.update_output>): UseMutationOutput<xnode.container.config.update_input, xnode.container.config.update_output>;
+declare function useContainerConfigBuild(input?: UseMutationInput<xnode.container.config.build_input, xnode.container.config.build_output>): UseMutationOutput<xnode.container.config.build_input, xnode.container.config.build_output>;
+declare function useContainerConfigApply(input?: UseMutationInput<xnode.container.config.apply_input, xnode.container.config.apply_output>): UseMutationOutput<xnode.container.config.apply_input, xnode.container.config.apply_output>;
+
+declare function useContainerFileMetadata({ client, container, path, overrides, }: UseQueryInput<xnode.container.file.metadata_input, xnode.container.file.metadata_output>): UseQueryOutput<xnode.container.file.metadata_output>;
+declare function useContainerFileSize({ client, container, path, overrides, }: UseQueryInput<xnode.container.file.size_input, xnode.container.file.size_output>): UseQueryOutput<xnode.container.file.size_output>;
+declare function useContainerFileMove(input?: UseMutationInput<xnode.container.file.move_input, xnode.container.file.move_output>): UseMutationOutput<xnode.container.file.move_input, xnode.container.file.move_output>;
+declare function useContainerFileRemove(input?: UseMutationInput<xnode.container.file.remove_input, xnode.container.file.remove_output>): UseMutationOutput<xnode.container.file.remove_input, xnode.container.file.remove_output>;
+declare function useContainerFileCopy(input?: UseMutationInput<xnode.container.file.copy_input, xnode.container.file.copy_output>): UseMutationOutput<xnode.container.file.copy_input, xnode.container.file.copy_output>;
+declare function useContainerFileReadFile({ client, container, path, overrides, }: UseQueryInput<xnode.container.file.read_file_input, xnode.container.file.read_file_output>): UseQueryOutput<xnode.container.file.read_file_output>;
+declare function useContainerFileWriteFile(input?: UseMutationInput<xnode.container.file.write_file_input, xnode.container.file.write_file_output>): UseMutationOutput<xnode.container.file.write_file_input, xnode.container.file.write_file_output>;
+declare function useContainerFileReadFolder({ client, container, path, metadata, overrides, }: UseQueryInput<xnode.container.file.read_folder_input, xnode.container.file.read_folder_output>): UseQueryOutput<xnode.container.file.read_folder_output>;
+declare function useContainerFileCreateFolder(input?: UseMutationInput<xnode.container.file.create_folder_input, xnode.container.file.create_folder_output>): UseMutationOutput<xnode.container.file.create_folder_input, xnode.container.file.create_folder_output>;
+declare function useContainerFileReadLink({ client, container, path, overrides, }: UseQueryInput<xnode.container.file.read_link_input, xnode.container.file.read_link_output>): UseQueryOutput<xnode.container.file.read_link_output>;
+declare function useContainerFileGetPermissions({ client, container, path, overrides, }: UseQueryInput<xnode.container.file.get_permissions_input, xnode.container.file.get_permissions_output>): UseQueryOutput<xnode.container.file.get_permissions_output>;
+declare function useContainerFileSetPermissions(input?: UseMutationInput<xnode.container.file.set_permissions_input, xnode.container.file.set_permissions_output>): UseMutationOutput<xnode.container.file.set_permissions_input, xnode.container.file.set_permissions_output>;
+
+declare function useContainerInfoUsersUsers({ client, overrides, }: UseQueryInput<xnode.host.info.users.users_input, xnode.host.info.users.users_output>): UseQueryOutput<xnode.host.info.users.users_output>;
+declare function useContainerInfoUsersGroups({ client, overrides, }: UseQueryInput<xnode.host.info.users.groups_input, xnode.host.info.users.groups_output>): UseQueryOutput<xnode.host.info.users.groups_output>;
+
+declare function useContainerListProcess({ client, overrides, }: UseQueryInput<xnode.host.list.process_input, xnode.host.list.process_output>): UseQueryOutput<xnode.host.list.process_output>;
+
+declare function useContainerProcessLogs({ client, process, level, max, overrides, }: UseQueryInput<xnode.host.process.logs_input, xnode.host.process.logs_output>): UseQueryOutput<xnode.host.process.logs_output>;
+declare function useContainerProcessStatus({ client, process, overrides, }: UseQueryInput<xnode.host.process.status_input, xnode.host.process.status_output>): UseQueryOutput<xnode.host.process.status_output>;
+declare function useContainerProcessUsage({ client, process, overrides, }: UseQueryInput<xnode.host.process.usage_input, xnode.host.process.usage_output>): UseQueryOutput<xnode.host.process.usage_output>;
+declare function useContainerProcessStart(input?: UseMutationInput<xnode.host.process.start_input, xnode.host.process.start_output>): UseMutationOutput<xnode.host.process.start_input, xnode.host.process.start_output>;
+declare function useContainerProcessStop(input?: UseMutationInput<xnode.host.process.stop_input, xnode.host.process.stop_output>): UseMutationOutput<xnode.host.process.stop_input, xnode.host.process.stop_output>;
+declare function useContainerProcessRestart(input?: UseMutationInput<xnode.host.process.restart_input, xnode.host.process.restart_output>): UseMutationOutput<xnode.host.process.restart_input, xnode.host.process.restart_output>;
+declare function useContainerProcessReload(input?: UseMutationInput<xnode.host.process.reload_input, xnode.host.process.reload_output>): UseMutationOutput<xnode.host.process.reload_input, xnode.host.process.reload_output>;
+
+declare function useContainerRemove(input?: UseMutationInput<xnode.container.remove_input, xnode.container.remove_output>): UseMutationOutput<xnode.container.remove_input, xnode.container.remove_output>;
 
 declare function useHostConfigGet({ client, overrides, }: UseQueryInput<xnode.host.config.get_input, xnode.host.config.get_output>): UseQueryOutput<xnode.host.config.get_output>;
 declare function useHostConfigSet(input?: UseMutationInput<xnode.host.config.set_input, xnode.host.config.set_output>): UseMutationOutput<xnode.host.config.set_input, xnode.host.config.set_output>;
@@ -87,4 +116,4 @@ declare function useHostUsageDisk({ client, overrides, }: UseQueryInput<xnode.ho
 declare function useHostUsageNetwork({ client, overrides, }: UseQueryInput<xnode.host.usage.network_input, xnode.host.usage.network_output>): UseQueryOutput<xnode.host.usage.network_output>;
 declare function useHostUsageGpu({ client, overrides, }: UseQueryInput<xnode.host.usage.gpu_input, xnode.host.usage.gpu_output>): UseQueryOutput<xnode.host.usage.gpu_output>;
 
-export { useHostConfigApply, useHostConfigBuild, useHostConfigGet, useHostConfigSet, useHostConfigUpdate, useHostConfigVersion, useHostFileCopy, useHostFileCreateFolder, useHostFileGetPermissions, useHostFileMetadata, useHostFileMove, useHostFileReadFile, useHostFileReadFolder, useHostFileReadLink, useHostFileRemove, useHostFileSetPermissions, useHostFileSize, useHostFileWriteFile, useHostInfoEval, useHostInfoFlakeMetadata, useHostInfoUsersGroups, useHostInfoUsersUsers, useHostListContainer, useHostListProcess, useHostPowerOff, useHostPowerReboot, useHostProcessLogs, useHostProcessReload, useHostProcessRestart, useHostProcessStart, useHostProcessStatus, useHostProcessStop, useHostProcessUsage, useHostUsageCpu, useHostUsageDisk, useHostUsageGpu, useHostUsageMemory, useHostUsageNetwork, utils_d as utils };
+export { useContainerConfigApply, useContainerConfigBuild, useContainerConfigGet, useContainerConfigSet, useContainerConfigUpdate, useContainerConfigVersion, useContainerFileCopy, useContainerFileCreateFolder, useContainerFileGetPermissions, useContainerFileMetadata, useContainerFileMove, useContainerFileReadFile, useContainerFileReadFolder, useContainerFileReadLink, useContainerFileRemove, useContainerFileSetPermissions, useContainerFileSize, useContainerFileWriteFile, useContainerInfoUsersGroups, useContainerInfoUsersUsers, useContainerListProcess, useContainerProcessLogs, useContainerProcessReload, useContainerProcessRestart, useContainerProcessStart, useContainerProcessStatus, useContainerProcessStop, useContainerProcessUsage, useContainerRemove, useHostConfigApply, useHostConfigBuild, useHostConfigGet, useHostConfigSet, useHostConfigUpdate, useHostConfigVersion, useHostFileCopy, useHostFileCreateFolder, useHostFileGetPermissions, useHostFileMetadata, useHostFileMove, useHostFileReadFile, useHostFileReadFolder, useHostFileReadLink, useHostFileRemove, useHostFileSetPermissions, useHostFileSize, useHostFileWriteFile, useHostInfoEval, useHostInfoFlakeMetadata, useHostInfoUsersGroups, useHostInfoUsersUsers, useHostListContainer, useHostListProcess, useHostPowerOff, useHostPowerReboot, useHostProcessLogs, useHostProcessReload, useHostProcessRestart, useHostProcessStart, useHostProcessStatus, useHostProcessStop, useHostProcessUsage, useHostUsageCpu, useHostUsageDisk, useHostUsageGpu, useHostUsageMemory, useHostUsageNetwork, utils_d as utils };

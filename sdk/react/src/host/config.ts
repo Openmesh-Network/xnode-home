@@ -17,7 +17,7 @@ export function useHostConfigGet({
 >): UseQueryOutput<xnode.host.config.get_output> {
   return useQuery(
     {
-      queryKey: ["host", "config", "get", client?.baseUrl ?? ""],
+      queryKey: [client?.baseUrl ?? "", "host", "config", "get"],
       enabled: !!client,
       queryFn: async () => {
         if (!client) {
@@ -53,7 +53,7 @@ export function useHostConfigSet(
       ) => {
         Promise.all([
           queryClient.invalidateQueries({
-            queryKey: ["host", "config", "get", client.baseUrl],
+            queryKey: [client.baseUrl, "host", "config", "get"],
           }),
         ]);
       },
@@ -71,7 +71,7 @@ export function useHostConfigVersion({
 >): UseQueryOutput<xnode.host.config.version_output> {
   return useQuery(
     {
-      queryKey: ["host", "config", "version", client?.baseUrl ?? ""],
+      queryKey: [client?.baseUrl ?? "", "host", "config", "version"],
       enabled: !!client,
       queryFn: async () => {
         if (!client) {
@@ -107,7 +107,7 @@ export function useHostConfigUpdate(
       ) => {
         Promise.all([
           queryClient.invalidateQueries({
-            queryKey: ["host", "config", "version", client.baseUrl],
+            queryKey: [client.baseUrl, "host", "config", "version"],
           }),
         ]);
       },

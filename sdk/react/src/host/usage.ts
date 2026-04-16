@@ -10,7 +10,7 @@ export function useHostUsageCpu({
 >): UseQueryOutput<xnode.host.usage.cpu_output> {
   return useQuery(
     {
-      queryKey: ["host", "usage", "cpu", client?.baseUrl ?? ""],
+      queryKey: [client?.baseUrl ?? "", "host", "usage", "cpu"],
       enabled: !!client,
       refetchInterval: 1_000, // 1 second
       queryFn: async () => {
@@ -36,7 +36,7 @@ export function useHostUsageMemory({
 >): UseQueryOutput<xnode.host.usage.memory_output> {
   return useQuery(
     {
-      queryKey: ["host", "usage", "memory", client?.baseUrl ?? ""],
+      queryKey: [client?.baseUrl ?? "", "host", "usage", "memory"],
       enabled: !!client,
       refetchInterval: 1_000, // 1 second
       queryFn: async () => {
@@ -62,7 +62,7 @@ export function useHostUsageDisk({
 >): UseQueryOutput<xnode.host.usage.disk_output> {
   return useQuery(
     {
-      queryKey: ["host", "usage", "disk", client?.baseUrl ?? ""],
+      queryKey: [client?.baseUrl ?? "", "host", "usage", "disk"],
       enabled: !!client,
       refetchInterval: 1_000, // 1 second
       queryFn: async () => {
@@ -88,7 +88,7 @@ export function useHostUsageNetwork({
 >): UseQueryOutput<xnode.host.usage.network_output> {
   return useQuery(
     {
-      queryKey: ["host", "usage", "network", client?.baseUrl ?? ""],
+      queryKey: [client?.baseUrl ?? "", "host", "usage", "network"],
       enabled: !!client,
       refetchInterval: 1_000, // 1 second
       queryFn: async () => {
@@ -114,7 +114,7 @@ export function useHostUsageGpu({
 >): UseQueryOutput<xnode.host.usage.gpu_output> {
   return useQuery(
     {
-      queryKey: ["host", "usage", "gpu", client?.baseUrl ?? ""],
+      queryKey: [client?.baseUrl ?? "", "host", "usage", "gpu"],
       enabled: !!client,
       refetchInterval: 1_000, // 1 second
       queryFn: async () => {

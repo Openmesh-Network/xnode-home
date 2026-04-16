@@ -102,15 +102,6 @@ declare namespace client_d {
   export type { client_d_Client as Client, client_d_QueryBase as QueryBase, client_d_QueryValue as QueryValue, client_d_WithClient as WithClient };
 }
 
-declare namespace index_d$a {
-  export {
-    bytes_d as bytes,
-    client_d as client,
-    login_d as login,
-    rustTypes_d as rust_types,
-  };
-}
-
 type ResponseCommand = {
     id: String$1;
 };
@@ -135,6 +126,29 @@ type command_d_CommandOptions = CommandOptions;
 type command_d_ResponseCommand = ResponseCommand;
 declare namespace command_d {
   export type { command_d_CommandAfter as CommandAfter, command_d_CommandAfterCondition as CommandAfterCondition, command_d_CommandOptions as CommandOptions, command_d_ResponseCommand as ResponseCommand };
+}
+
+declare function awaitCommand({ client, command, pollInterval, }: {
+    client: Client;
+    command: ResponseCommand;
+    pollInterval?: number;
+}): Promise<void>;
+
+declare const helpers_d_awaitCommand: typeof awaitCommand;
+declare namespace helpers_d {
+  export {
+    helpers_d_awaitCommand as awaitCommand,
+  };
+}
+
+declare namespace index_d$g {
+  export {
+    bytes_d as bytes,
+    client_d as client,
+    helpers_d as helpers,
+    login_d as login,
+    rustTypes_d as rust_types,
+  };
 }
 
 type Metadata = {
@@ -284,7 +298,7 @@ declare namespace response_d {
   export type { response_d_ResponseError as ResponseError, response_d_ResponseResult as ResponseResult, response_d_TypedResponseError as TypedResponseError };
 }
 
-declare namespace index_d$9 {
+declare namespace index_d$f {
   export {
     command_d as command,
     file_d as file,
@@ -292,11 +306,234 @@ declare namespace index_d$9 {
     nix_d as nix,
     process_d as process,
     response_d as response,
-    index_d$a as utils,
+    index_d$g as utils,
   };
 }
 
-declare function scope$7(): string;
+type ContainerPath = {
+    container: string;
+};
+
+declare function scope$b<Path extends ContainerPath>(path: Path): string;
+type get_input$1 = WithClient<{
+    path: ContainerPath;
+}>;
+type get_output$1 = ResponseResult<Bytes>;
+declare function get$1(input: get_input$1): Promise<get_output$1>;
+type set_input$1 = WithClient<{
+    path: ContainerPath;
+    data: Bytes;
+}>;
+type set_output$1 = ResponseResult<Bytes>;
+declare function set$1(input: set_input$1): Promise<set_output$1>;
+type version_input$1 = WithClient<{
+    path: ContainerPath;
+}>;
+type version_output$1 = ResponseResult<Bytes>;
+declare function version$1(input: version_input$1): Promise<version_output$1>;
+type update_input$1 = WithClient<{
+    path: ContainerPath;
+    data: UpdateData & CommandOptions;
+}>;
+type update_output$1 = ResponseCommand;
+declare function update$1(input: update_input$1): Promise<update_output$1>;
+type build_input$1 = WithClient<{
+    path: ContainerPath;
+    data: CommandOptions;
+}>;
+type build_output$1 = ResponseCommand;
+declare function build$1(input: build_input$1): Promise<build_output$1>;
+type apply_input$1 = WithClient<{
+    path: ContainerPath;
+    query: ApplyQuery;
+    data: CommandOptions;
+}>;
+type apply_output$1 = ResponseResult<ResponseCommand>;
+declare function apply$1(input: apply_input$1): Promise<apply_output$1>;
+
+declare namespace index_d$e {
+  export { apply$1 as apply, build$1 as build, get$1 as get, scope$b as scope, set$1 as set, update$1 as update, version$1 as version };
+  export type { apply_input$1 as apply_input, apply_output$1 as apply_output, build_input$1 as build_input, build_output$1 as build_output, get_input$1 as get_input, get_output$1 as get_output, set_input$1 as set_input, set_output$1 as set_output, update_input$1 as update_input, update_output$1 as update_output, version_input$1 as version_input, version_output$1 as version_output };
+}
+
+declare function scope$a<Path extends ContainerPath>(path: Path): string;
+type metadata_input$1 = WithClient<{
+    path: ContainerPath;
+    query: PathQuery;
+}>;
+type metadata_output$1 = ResponseResult<Metadata>;
+declare function metadata$1(input: metadata_input$1): Promise<metadata_output$1>;
+type size_input$1 = WithClient<{
+    path: ContainerPath;
+    query: PathQuery;
+}>;
+type size_output$1 = ResponseResult<Size>;
+declare function size$1(input: size_input$1): Promise<size_output$1>;
+type move_input$1 = WithClient<{
+    path: ContainerPath;
+    data: SourceDestinationData;
+}>;
+type move_output$1 = ResponseResult<Bytes>;
+declare function move$1(input: move_input$1): Promise<move_output$1>;
+type remove_input$2 = WithClient<{
+    path: ContainerPath;
+    query: PathQuery;
+}>;
+type remove_output$2 = ResponseResult<Bytes>;
+declare function remove$2(input: remove_input$2): Promise<remove_output$2>;
+type copy_input$1 = WithClient<{
+    path: ContainerPath;
+    data: SourceDestinationData;
+}>;
+type copy_output$1 = ResponseResult<Bytes>;
+declare function copy$1(input: copy_input$1): Promise<copy_output$1>;
+type read_file_input$1 = WithClient<{
+    path: ContainerPath;
+    query: PathQuery;
+}>;
+type read_file_output$1 = ResponseResult<Bytes>;
+declare function read_file$1(input: read_file_input$1): Promise<read_file_output$1>;
+type write_file_input$1 = WithClient<{
+    path: ContainerPath;
+    query: PathQuery;
+    data: Bytes;
+}>;
+type write_file_output$1 = ResponseResult<Bytes>;
+declare function write_file$1(input: write_file_input$1): Promise<write_file_output$1>;
+type read_folder_input$1 = WithClient<{
+    path: ContainerPath;
+    query: PathQuery & ReadFolderOptions;
+}>;
+type read_folder_output$1 = ResponseResult<Vec<FolderItem>>;
+declare function read_folder$1(input: read_folder_input$1): Promise<read_folder_output$1>;
+type create_folder_input$1 = WithClient<{
+    path: ContainerPath;
+    query: PathQuery;
+}>;
+type create_folder_output$1 = ResponseResult<Bytes>;
+declare function create_folder$1(input: create_folder_input$1): Promise<create_folder_output$1>;
+type read_link_input$1 = WithClient<{
+    path: ContainerPath;
+    query: PathQuery;
+}>;
+type read_link_output$1 = ResponseResult<String>;
+declare function read_link$1(input: read_link_input$1): Promise<read_link_output$1>;
+type get_permissions_input$1 = WithClient<{
+    path: ContainerPath;
+    query: PathQuery;
+}>;
+type get_permissions_output$1 = ResponseResult<Vec<Permission>>;
+declare function get_permissions$1(input: get_permissions_input$1): Promise<get_permissions_output$1>;
+type set_permissions_input$1 = WithClient<{
+    path: ContainerPath;
+    query: PathQuery;
+    data: Vec<Permission>;
+}>;
+type set_permissions_output$1 = ResponseResult<Bytes>;
+declare function set_permissions$1(input: set_permissions_input$1): Promise<set_permissions_output$1>;
+
+declare namespace index_d$d {
+  export { copy$1 as copy, create_folder$1 as create_folder, get_permissions$1 as get_permissions, metadata$1 as metadata, move$1 as move, read_file$1 as read_file, read_folder$1 as read_folder, read_link$1 as read_link, remove$2 as remove, scope$a as scope, set_permissions$1 as set_permissions, size$1 as size, write_file$1 as write_file };
+  export type { copy_input$1 as copy_input, copy_output$1 as copy_output, create_folder_input$1 as create_folder_input, create_folder_output$1 as create_folder_output, get_permissions_input$1 as get_permissions_input, get_permissions_output$1 as get_permissions_output, metadata_input$1 as metadata_input, metadata_output$1 as metadata_output, move_input$1 as move_input, move_output$1 as move_output, read_file_input$1 as read_file_input, read_file_output$1 as read_file_output, read_folder_input$1 as read_folder_input, read_folder_output$1 as read_folder_output, read_link_input$1 as read_link_input, read_link_output$1 as read_link_output, remove_input$2 as remove_input, remove_output$2 as remove_output, set_permissions_input$1 as set_permissions_input, set_permissions_output$1 as set_permissions_output, size_input$1 as size_input, size_output$1 as size_output, write_file_input$1 as write_file_input, write_file_output$1 as write_file_output };
+}
+
+declare function scope$9<Path extends ContainerPath>(path: Path): string;
+declare namespace users$1 {
+    type users_input = WithClient<{
+        path: ContainerPath;
+    }>;
+    type users_output = ResponseResult<Vec<User>>;
+    function users(input: users_input): Promise<users_output>;
+    type groups_input = WithClient<{
+        path: ContainerPath;
+    }>;
+    type groups_output = ResponseResult<Vec<Group>>;
+    function groups(input: groups_input): Promise<groups_output>;
+}
+
+type FlakeQuery$1 = {
+    flake: String$1;
+};
+type EvalQuery$1 = {
+    statement: String$1;
+};
+
+declare namespace index_d$c {
+  export { scope$9 as scope, users$1 as users };
+  export type { EvalQuery$1 as EvalQuery, FlakeQuery$1 as FlakeQuery };
+}
+
+declare function scope$8<Path extends ContainerPath>(path: Path): string;
+type process_input$1 = WithClient<{
+    path: ContainerPath;
+}>;
+type process_output$1 = ResponseResult<Vec<Process>>;
+declare function process$1(input: process_input$1): Promise<process_output$1>;
+
+declare namespace index_d$b {
+  export { process$1 as process, scope$8 as scope };
+  export type { process_input$1 as process_input, process_output$1 as process_output };
+}
+
+type ProcessPath$1 = {
+    process: String$1;
+};
+
+declare function scope$7<Path extends ContainerPath>(path: Path): string;
+type logs_input$1 = WithClient<{
+    path: ContainerPath & ProcessPath$1;
+    query?: LogQuery;
+}>;
+type logs_output$1 = ResponseResult<Vec<Log>>;
+declare function logs$1(input: logs_input$1): Promise<logs_output$1>;
+type status_input$1 = WithClient<{
+    path: ContainerPath & ProcessPath$1;
+}>;
+type status_output$1 = ResponseResult<Status>;
+declare function status$1(input: status_input$1): Promise<status_output$1>;
+type usage_input$1 = WithClient<{
+    path: ContainerPath & ProcessPath$1;
+}>;
+type usage_output$1 = ResponseResult<Usage>;
+declare function usage$1(input: usage_input$1): Promise<usage_output$1>;
+type start_input$1 = WithClient<{
+    path: ContainerPath & ProcessPath$1;
+}>;
+type start_output$1 = ResponseResult<Bytes>;
+declare function start$1(input: start_input$1): Promise<start_output$1>;
+type stop_input$1 = WithClient<{
+    path: ContainerPath & ProcessPath$1;
+}>;
+type stop_output$1 = ResponseResult<Bytes>;
+declare function stop$1(input: stop_input$1): Promise<stop_output$1>;
+type restart_input$1 = WithClient<{
+    path: ContainerPath & ProcessPath$1;
+}>;
+type restart_output$1 = ResponseResult<Bytes>;
+declare function restart$1(input: restart_input$1): Promise<restart_output$1>;
+type reload_input$1 = WithClient<{
+    path: ContainerPath & ProcessPath$1;
+}>;
+type reload_output$1 = ResponseResult<Bytes>;
+declare function reload$1(input: reload_input$1): Promise<reload_output$1>;
+
+declare namespace index_d$a {
+  export { logs$1 as logs, reload$1 as reload, restart$1 as restart, scope$7 as scope, start$1 as start, status$1 as status, stop$1 as stop, usage$1 as usage };
+  export type { ProcessPath$1 as ProcessPath, logs_input$1 as logs_input, logs_output$1 as logs_output, reload_input$1 as reload_input, reload_output$1 as reload_output, restart_input$1 as restart_input, restart_output$1 as restart_output, start_input$1 as start_input, start_output$1 as start_output, status_input$1 as status_input, status_output$1 as status_output, stop_input$1 as stop_input, stop_output$1 as stop_output, usage_input$1 as usage_input, usage_output$1 as usage_output };
+}
+
+type remove_input$1 = WithClient<{
+    path: ContainerPath;
+}>;
+type remove_output$1 = ResponseResult<Bytes>;
+declare function remove$1(input: remove_input$1): Promise<remove_output$1>;
+
+declare namespace index_d$9 {
+  export { index_d$e as config, index_d$d as file, index_d$c as info, index_d$b as list, index_d$a as process, remove$1 as remove };
+  export type { remove_input$1 as remove_input, remove_output$1 as remove_output };
+}
+
+declare function scope$6(): string;
 type get_input = WithClient<{}>;
 type get_output = ResponseResult<Bytes>;
 declare function get(input: get_input): Promise<get_output>;
@@ -344,11 +581,11 @@ declare const index_d$8_version: typeof version;
 type index_d$8_version_input = version_input;
 type index_d$8_version_output = version_output;
 declare namespace index_d$8 {
-  export { index_d$8_apply as apply, index_d$8_build as build, index_d$8_get as get, scope$7 as scope, index_d$8_set as set, index_d$8_update as update, index_d$8_version as version };
+  export { index_d$8_apply as apply, index_d$8_build as build, index_d$8_get as get, scope$6 as scope, index_d$8_set as set, index_d$8_update as update, index_d$8_version as version };
   export type { index_d$8_apply_input as apply_input, index_d$8_apply_output as apply_output, index_d$8_build_input as build_input, index_d$8_build_output as build_output, index_d$8_get_input as get_input, index_d$8_get_output as get_output, index_d$8_set_input as set_input, index_d$8_set_output as set_output, index_d$8_update_input as update_input, index_d$8_update_output as update_output, index_d$8_version_input as version_input, index_d$8_version_output as version_output };
 }
 
-declare function scope$6(): string;
+declare function scope$5(): string;
 type metadata_input = WithClient<{
     query: PathQuery;
 }>;
@@ -449,7 +686,7 @@ declare const index_d$7_write_file: typeof write_file;
 type index_d$7_write_file_input = write_file_input;
 type index_d$7_write_file_output = write_file_output;
 declare namespace index_d$7 {
-  export { index_d$7_copy as copy, index_d$7_create_folder as create_folder, index_d$7_get_permissions as get_permissions, index_d$7_metadata as metadata, index_d$7_move as move, index_d$7_read_file as read_file, index_d$7_read_folder as read_folder, index_d$7_read_link as read_link, index_d$7_remove as remove, scope$6 as scope, index_d$7_set_permissions as set_permissions, index_d$7_size as size, index_d$7_write_file as write_file };
+  export { index_d$7_copy as copy, index_d$7_create_folder as create_folder, index_d$7_get_permissions as get_permissions, index_d$7_metadata as metadata, index_d$7_move as move, index_d$7_read_file as read_file, index_d$7_read_folder as read_folder, index_d$7_read_link as read_link, index_d$7_remove as remove, scope$5 as scope, index_d$7_set_permissions as set_permissions, index_d$7_size as size, index_d$7_write_file as write_file };
   export type { index_d$7_copy_input as copy_input, index_d$7_copy_output as copy_output, index_d$7_create_folder_input as create_folder_input, index_d$7_create_folder_output as create_folder_output, index_d$7_get_permissions_input as get_permissions_input, index_d$7_get_permissions_output as get_permissions_output, index_d$7_metadata_input as metadata_input, index_d$7_metadata_output as metadata_output, index_d$7_move_input as move_input, index_d$7_move_output as move_output, index_d$7_read_file_input as read_file_input, index_d$7_read_file_output as read_file_output, index_d$7_read_folder_input as read_folder_input, index_d$7_read_folder_output as read_folder_output, index_d$7_read_link_input as read_link_input, index_d$7_read_link_output as read_link_output, index_d$7_remove_input as remove_input, index_d$7_remove_output as remove_output, index_d$7_set_permissions_input as set_permissions_input, index_d$7_set_permissions_output as set_permissions_output, index_d$7_size_input as size_input, index_d$7_size_output as size_output, index_d$7_write_file_input as write_file_input, index_d$7_write_file_output as write_file_output };
 }
 
@@ -460,7 +697,7 @@ type EvalQuery = {
     statement: String$1;
 };
 
-declare function scope$5(): string;
+declare function scope$4(): string;
 declare namespace flake {
     type metadata_input = WithClient<{
         query: FlakeQuery;
@@ -490,11 +727,11 @@ type index_d$6_eval_output = eval_output;
 import index_d$6_flake = flake;
 import index_d$6_users = users;
 declare namespace index_d$6 {
-  export { _eval as eval, index_d$6_flake as flake, scope$5 as scope, index_d$6_users as users };
+  export { _eval as eval, index_d$6_flake as flake, scope$4 as scope, index_d$6_users as users };
   export type { index_d$6_EvalQuery as EvalQuery, index_d$6_FlakeQuery as FlakeQuery, index_d$6_eval_input as eval_input, index_d$6_eval_output as eval_output };
 }
 
-declare function scope$4(): string;
+declare function scope$3(): string;
 type process_input = WithClient<{}>;
 type process_output = ResponseResult<Vec<Process>>;
 declare function process(input: process_input): Promise<process_output>;
@@ -509,11 +746,11 @@ declare const index_d$5_process: typeof process;
 type index_d$5_process_input = process_input;
 type index_d$5_process_output = process_output;
 declare namespace index_d$5 {
-  export { index_d$5_container as container, index_d$5_process as process, scope$4 as scope };
+  export { index_d$5_container as container, index_d$5_process as process, scope$3 as scope };
   export type { index_d$5_container_input as container_input, index_d$5_container_output as container_output, index_d$5_process_input as process_input, index_d$5_process_output as process_output };
 }
 
-declare function scope$3(): string;
+declare function scope$2(): string;
 type off_input = WithClient<{}>;
 type off_output = ResponseResult<Bytes>;
 declare function off(input: off_input): Promise<off_output>;
@@ -528,7 +765,7 @@ declare const index_d$4_reboot: typeof reboot;
 type index_d$4_reboot_input = reboot_input;
 type index_d$4_reboot_output = reboot_output;
 declare namespace index_d$4 {
-  export { index_d$4_off as off, index_d$4_reboot as reboot, scope$3 as scope };
+  export { index_d$4_off as off, index_d$4_reboot as reboot, scope$2 as scope };
   export type { index_d$4_off_input as off_input, index_d$4_off_output as off_output, index_d$4_reboot_input as reboot_input, index_d$4_reboot_output as reboot_output };
 }
 
@@ -536,7 +773,7 @@ type ProcessPath = {
     process: String$1;
 };
 
-declare function scope$2(): string;
+declare function scope$1(): string;
 type logs_input = WithClient<{
     path: ProcessPath;
     query?: LogQuery;
@@ -597,7 +834,7 @@ declare const index_d$3_usage: typeof usage;
 type index_d$3_usage_input = usage_input;
 type index_d$3_usage_output = usage_output;
 declare namespace index_d$3 {
-  export { index_d$3_logs as logs, index_d$3_reload as reload, index_d$3_restart as restart, scope$2 as scope, index_d$3_start as start, index_d$3_status as status, index_d$3_stop as stop, index_d$3_usage as usage };
+  export { index_d$3_logs as logs, index_d$3_reload as reload, index_d$3_restart as restart, scope$1 as scope, index_d$3_start as start, index_d$3_status as status, index_d$3_stop as stop, index_d$3_usage as usage };
   export type { index_d$3_ProcessPath as ProcessPath, index_d$3_logs_input as logs_input, index_d$3_logs_output as logs_output, index_d$3_reload_input as reload_input, index_d$3_reload_output as reload_output, index_d$3_restart_input as restart_input, index_d$3_restart_output as restart_output, index_d$3_start_input as start_input, index_d$3_start_output as start_output, index_d$3_status_input as status_input, index_d$3_status_output as status_output, index_d$3_stop_input as stop_input, index_d$3_stop_output as stop_output, index_d$3_usage_input as usage_input, index_d$3_usage_output as usage_output };
 }
 
@@ -634,7 +871,7 @@ type GpuUsage = {
     };
 };
 
-declare function scope$1(): string;
+declare function scope(): string;
 type cpu_input = WithClient<{}>;
 type cpu_output = ResponseResult<Vec<CpuUsage>>;
 declare function cpu(input: cpu_input): Promise<cpu_output>;
@@ -671,14 +908,12 @@ type index_d$2_memory_output = memory_output;
 declare const index_d$2_network: typeof network;
 type index_d$2_network_input = network_input;
 type index_d$2_network_output = network_output;
+declare const index_d$2_scope: typeof scope;
 declare namespace index_d$2 {
-  export { index_d$2_cpu as cpu, index_d$2_disk as disk, index_d$2_gpu as gpu, index_d$2_memory as memory, index_d$2_network as network, scope$1 as scope };
+  export { index_d$2_cpu as cpu, index_d$2_disk as disk, index_d$2_gpu as gpu, index_d$2_memory as memory, index_d$2_network as network, index_d$2_scope as scope };
   export type { index_d$2_CpuUsage as CpuUsage, index_d$2_DiskUsage as DiskUsage, index_d$2_GpuUsage as GpuUsage, index_d$2_MemoryUsage as MemoryUsage, index_d$2_NetworkUsage as NetworkUsage, index_d$2_cpu_input as cpu_input, index_d$2_cpu_output as cpu_output, index_d$2_disk_input as disk_input, index_d$2_disk_output as disk_output, index_d$2_gpu_input as gpu_input, index_d$2_gpu_output as gpu_output, index_d$2_memory_input as memory_input, index_d$2_memory_output as memory_output, index_d$2_network_input as network_input, index_d$2_network_output as network_output };
 }
 
-declare function scope(): string;
-
-declare const index_d$1_scope: typeof scope;
 declare namespace index_d$1 {
   export {
     index_d$8 as config,
@@ -687,14 +922,14 @@ declare namespace index_d$1 {
     index_d$5 as list,
     index_d$4 as power,
     index_d$3 as process,
-    index_d$1_scope as scope,
     index_d$2 as usage,
   };
 }
 
 declare namespace index_d {
   export {
-    index_d$9 as common,
+    index_d$f as common,
+    index_d$9 as container,
     index_d$1 as host,
   };
 }

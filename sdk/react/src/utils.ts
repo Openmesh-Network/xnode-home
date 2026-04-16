@@ -1,4 +1,4 @@
-import { xnode } from "@openmesh-network/xnode-manager-sdk";
+import type { xnode } from "@openmesh-network/xnode-manager-sdk";
 import {
   type UseQueryOptions,
   useQuery as useTanstackQuery,
@@ -71,22 +71,4 @@ export function useMutation<Input, Output>(
       options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });
-}
-
-export async function awaitCommand({
-  client,
-  command,
-  pollInterval,
-}: {
-  client: xnode.common.utils.client.Client;
-  command: xnode.common.command.ResponseCommand;
-  pollInterval?: number; // In milliseconds, default 1000 (1 second)
-}) {
-  let status: xnode.common.process.Status | undefined;
-  while (!status || status.running) {
-    await new Promise((resolve) => setTimeout(resolve, pollInterval ?? 1000));
-    status = await xnode.host.process
-      .status({ client, path: { process: command.id } })
-      .catch(() => undefined);
-  }
 }

@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { Text } from "../../ui/Text";
 import { IconButton } from "../../ui/IconButton";
-import { AppList, AppDetail, allApps } from "./AppStoreContent";
+import { AppList, AppDetail } from "./AppStoreContent";
+import type { AppInfo } from "./appMetadata";
 
 export function AppStore({ onClose }: { onClose: () => void }) {
-  const [selectedApp, setSelectedApp] = useState<(typeof allApps)[0] | null>(
-    null,
-  );
+  const [selectedApp, setSelectedApp] = useState<AppInfo | null>(null);
 
   return (
     <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-app)] h-full flex flex-col overflow-hidden shadow-2xl border border-[var(--color-border)]">

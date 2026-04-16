@@ -1,10 +1,12 @@
 export function GridItem({
   icon,
   label,
+  subtitle,
   onClick,
 }: {
   icon: string;
   label: string;
+  subtitle?: string;
   onClick?: () => void;
 }) {
   return (
@@ -16,6 +18,11 @@ export function GridItem({
       <span className="text-sm text-[var(--color-text-secondary)] font-medium">
         {label}
       </span>
+      {subtitle && (
+        <span className="text-xs text-[var(--color-text-muted)] mt-1">
+          {subtitle}
+        </span>
+      )}
     </div>
   );
 }

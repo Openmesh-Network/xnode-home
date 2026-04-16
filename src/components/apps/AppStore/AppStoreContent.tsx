@@ -3,135 +3,62 @@ import { GridItem } from "../../ui/GridItem";
 import { Button } from "../../ui/Button";
 import { Badge } from "../../ui/Badge";
 import { Card } from "../../ui/Card";
-import { StatCard } from "../../ui/StatCard";
 import { Text } from "../../ui/Text";
 import { IconButton } from "../../ui/IconButton";
+import { availableApps, appCategories, type AppInfo } from "./appMetadata";
+import { useInstalledApps } from "./useInstalledApps";
 
-interface App {
-  icon: string;
-  name: string;
-  developer: string;
-  description: string;
-  rating: number;
-  downloads: string;
-  size: string;
-  version: string;
-  category: string;
+function InstallProgress() {
+  return (
+    <div className="flex items-center gap-2">
+      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+          fill="none"
+        />
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+        />
+      </svg>
+      <span>Installing...</span>
+    </div>
+  );
 }
 
-export const allApps: App[] = [
-  {
-    icon: "🎮",
-    name: "Minecraft",
-    developer: "Mojang Studios",
-    description:
-      "Explore infinite worlds and build everything from the simplest homes to the grandest castles. Create, explore, and survive!",
-    rating: 4.8,
-    downloads: "100M+",
-    size: "245 MB",
-    version: "1.21.0",
-    category: "Games",
-  },
-  {
-    icon: "📱",
-    name: "Calculator",
-    developer: "Apple",
-    description:
-      "Perform basic arithmetic calculations with a clean, modern interface.",
-    rating: 4.5,
-    downloads: "50M+",
-    size: "12 MB",
-    version: "3.0",
-    category: "Utilities",
-  },
-  {
-    icon: "🎨",
-    name: "Photoshop",
-    developer: "Adobe Inc.",
-    description:
-      "The industry-standard photo editing software, now on your device. Edit photos like a pro with powerful tools.",
-    rating: 4.7,
-    downloads: "20M+",
-    size: "1.2 GB",
-    version: "25.0",
-    category: "Creative",
-  },
-  {
-    icon: "📚",
-    name: "Duolingo",
-    developer: "Duolingo",
-    description:
-      "Learn languages for free. Fun, bite-sized lessons make learning a new language fast and easy.",
-    rating: 4.6,
-    downloads: "100M+",
-    size: "78 MB",
-    version: "8.0",
-    category: "Education",
-  },
-  {
-    icon: "📝",
-    name: "Notion",
-    developer: "Notion Labs",
-    description:
-      "The all-in-one workspace for notes, docs, and collaboration. Organize your life and work in one place.",
-    rating: 4.9,
-    downloads: "15M+",
-    size: "95 MB",
-    version: "3.0",
-    category: "Productivity",
-  },
-  {
-    icon: "🎵",
-    name: "Spotify",
-    developer: "Spotify AB",
-    description:
-      "Millions of songs and podcasts. Discover new music and enjoy your favorite tracks offline.",
-    rating: 4.5,
-    downloads: "500M+",
-    size: "128 MB",
-    version: "8.8",
-    category: "Featured",
-  },
-  {
-    icon: "🎬",
-    name: "Netflix",
-    developer: "Netflix Inc.",
-    description:
-      "Watch TV shows and movies on demand. Stream award-winning original content anywhere.",
-    rating: 4.4,
-    downloads: "1B+",
-    size: "95 MB",
-    version: "9.0",
-    category: "Featured",
-  },
-  {
-    icon: "📦",
-    name: "VS Code",
-    developer: "Microsoft",
-    description:
-      "Code editing. Redefined. A powerful code editor with syntax highlighting and intelligent code completion.",
-    rating: 4.8,
-    downloads: "30M+",
-    size: "210 MB",
-    version: "1.85",
-    category: "Utilities",
-  },
-];
+export function AppDetail({ app, onBack }: { app: AppInfo; onBack: () => void }) {
+  const { installedAppIds, installApp, uninstallApp, isInstalling, isRemoving } = useInstalledApps();
+  const [installingAppId, setInstallingAppId] = useState<string | null>(null);
+  const isInstalled = installedAppIds.includes(app.id);
+  const isAppInstalling = installingAppId === app.id;
+  const isProcessing = isInstalling || isRemoving;
 
-const categories = [
-  "Featured",
-  "Games",
-  "Utilities",
-  "Creative",
-  "Education",
-  "Productivity",
-];
+  const handleInstall = async () => {
+    setInstallingAppId(app.id);
+    try {
+      await installApp(app.id);
+    } finally {
+      setInstallingAppId(null);
+    }
+  };
 
-export function AppDetail({ app, onBack }: { app: App; onBack: () => void }) {
-  const [installed, setInstalled] = useState(false);
+  const handleUninstall = async () => {
+    setInstallingAppId(app.id);
+    try {
+      await uninstallApp(app.id);
+    } finally {
+      setInstallingAppId(null);
+    }
+  };
 
   return (
-    <div className="p-6 md:p-8 space-y-8">
+    <div className="p-6 space-y-6">
       <div className="flex items-center gap-3">
         <button
           onClick={onBack}
@@ -147,7 +74,7 @@ export function AppDetail({ app, onBack }: { app: App; onBack: () => void }) {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
-        <div className="text-8xl p-4 bg-[var(--color-bg-elevated)] rounded-2xl shadow-xl">
+        <div className="text-6xl p-4 bg-[var(--color-bg-elevated)] rounded-2xl shadow-xl">
           {app.icon}
         </div>
         <div className="flex-1">
@@ -155,105 +82,72 @@ export function AppDetail({ app, onBack }: { app: App; onBack: () => void }) {
             {app.name}
           </Text>
           <Text size="lg" color="secondary" className="mt-1">
-            {app.developer}
+            Openmesh Network
           </Text>
           <div className="flex flex-wrap items-center gap-4 mt-3">
-            <Badge variant="accent" icon="★">
-              {app.rating}
-            </Badge>
+            <Badge variant="accent">{app.category}</Badge>
             <Text size="sm" color="muted">
-              {app.downloads} downloads
-            </Text>
-            <Text size="sm" color="muted">
-              {app.size}
+              v{app.version}
             </Text>
           </div>
         </div>
         <Button
-          variant={installed ? "secondary" : "primary"}
+          variant={isInstalled ? "secondary" : "primary"}
           size="lg"
-          onClick={() => setInstalled(!installed)}
-          className="w-full sm:w-auto"
+          onClick={isAppInstalling ? () => {} : isInstalled ? handleUninstall : handleInstall}
+          disabled={isProcessing}
+          className="w-full sm:w-auto min-w-[140px]"
         >
-          {installed ? "✓ Installed" : "Install"}
+          {isAppInstalling ? <InstallProgress /> : isInstalled ? "Uninstall" : "Install"}
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="Category" value={app.category} />
-        <StatCard label="Version" value={app.version} />
-        <StatCard label="Size" value={app.size} />
-        <StatCard label="Downloads" value={app.downloads} />
-      </div>
-
-      <div className="space-y-3">
-        <Text size="lg" weight="semibold">
+      <Card padding="md">
+        <Text size="lg" weight="semibold" className="mb-3">
           About
         </Text>
         <Text color="secondary" className="leading-relaxed">
           {app.description}
         </Text>
-      </div>
-
-      <Card padding="md">
-        <Text size="lg" weight="semibold" className="mb-4">
-          Ratings & Reviews
-        </Text>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-6">
-          <div className="text-center sm:text-left">
-            <Text size="4xl" weight="bold">
-              {app.rating}
-            </Text>
-            <div className="flex text-yellow-400 text-xl mt-1 justify-center sm:justify-start">
-              {"★".repeat(Math.floor(app.rating))}
-              {"☆".repeat(5 - Math.floor(app.rating))}
-            </div>
-            <Text size="sm" color="muted" className="mt-1">
-              {app.downloads} ratings
-            </Text>
-          </div>
-          <div className="h-px sm:h-16 w-full sm:w-px bg-[var(--color-border)]" />
-          <div className="space-y-2 flex-1">
-            {[5, 4, 3, 2, 1].map((stars) => (
-              <div key={stars} className="flex items-center gap-3">
-                <Text size="sm" color="muted" className="w-4">
-                  {stars}
-                </Text>
-                <span className="text-yellow-400">★</span>
-                <div className="flex-1 h-2 rounded-full bg-[var(--color-bg-hover)] overflow-hidden">
-                  <div
-                    className="h-full bg-yellow-400 rounded-full"
-                    style={{
-                      width:
-                        stars === 5
-                          ? "65%"
-                          : stars === 4
-                            ? "20%"
-                            : stars === 3
-                              ? "8%"
-                              : stars === 2
-                                ? "4%"
-                                : "3%",
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </Card>
+
+      {isInstalled && (
+        <Card padding="md" className="border-green-500/30">
+          <div className="flex items-center gap-2">
+            <span className="text-green-500">✓</span>
+            <Text weight="medium">Installed</Text>
+          </div>
+          <Text size="sm" color="muted" className="mt-1">
+            This app is installed on your system. Changes require a system rebuild.
+          </Text>
+        </Card>
+      )}
     </div>
   );
 }
 
-export function AppList({ onSelectApp }: { onSelectApp: (app: App) => void }) {
-  const [activeCategory, setActiveCategory] = useState("Featured");
+export function AppList({ onSelectApp }: { onSelectApp: (app: AppInfo) => void }) {
+  const [activeCategory, setActiveCategory] = useState("All");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const { installedAppIds, installApp, isInstalling } = useInstalledApps();
+  const [installingAppId, setInstallingAppId] = useState<string | null>(null);
+
+  const installedIds = new Set(installedAppIds);
 
   const filteredApps =
-    activeCategory === "Featured"
-      ? allApps
-      : allApps.filter((app) => app.category === activeCategory);
+    activeCategory === "All"
+      ? availableApps
+      : availableApps.filter((app) => app.category === activeCategory);
+
+  const handleAppClick = async (app: AppInfo) => {
+    if (installedIds.has(app.id) || isInstalling) return;
+    setInstallingAppId(app.id);
+    try {
+      await installApp(app.id);
+    } finally {
+      setInstallingAppId(null);
+    }
+  };
 
   return (
     <div className="h-full flex flex-col">
@@ -283,14 +177,18 @@ export function AppList({ onSelectApp }: { onSelectApp: (app: App) => void }) {
           <IconButton icon="✕" onClick={() => setMobileSidebarOpen(false)} />
         </div>
         <div className="p-4 space-y-2">
-          {categories.map((cat) => (
+          {appCategories.map((cat) => (
             <button
               key={cat}
               onClick={() => {
                 setActiveCategory(cat);
                 setMobileSidebarOpen(false);
               }}
-              className={`w-full text-left px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 ${activeCategory === cat ? "bg-[var(--color-accent)] text-white shadow-lg shadow-[var(--color-accent)]/20" : "text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-white"}`}
+              className={`w-full text-left px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 ${
+                activeCategory === cat
+                  ? "bg-[var(--color-accent)] text-white shadow-lg shadow-[var(--color-accent)]/20"
+                  : "text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-white"
+              }`}
             >
               {cat}
             </button>
@@ -309,11 +207,15 @@ export function AppList({ onSelectApp }: { onSelectApp: (app: App) => void }) {
             Categories
           </Text>
           <ul className="space-y-1">
-            {categories.map((cat) => (
+            {appCategories.map((cat) => (
               <li key={cat}>
                 <button
                   onClick={() => setActiveCategory(cat)}
-                  className={`w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors ${activeCategory === cat ? "bg-[var(--color-accent)] text-white shadow-lg shadow-[var(--color-accent)]/20" : "text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"}`}
+                  className={`w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                    activeCategory === cat
+                      ? "bg-[var(--color-accent)] text-white shadow-lg shadow-[var(--color-accent)]/20"
+                      : "text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
+                  }`}
                 >
                   {cat}
                 </button>
@@ -323,15 +225,44 @@ export function AppList({ onSelectApp }: { onSelectApp: (app: App) => void }) {
         </aside>
         <div className="flex-1 overflow-auto p-4">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredApps.map((app) => (
-              <div
-                key={app.name}
-                onClick={() => onSelectApp(app)}
-                className="cursor-pointer"
-              >
-                <GridItem icon={app.icon} label={app.name} />
-              </div>
-            ))}
+            {filteredApps.map((app) => {
+              const isAppInstalled = installedIds.has(app.id);
+              const isAppInstalling = installingAppId === app.id;
+              const isDisabled = isAppInstalled || isInstalling;
+              
+              return (
+                <div
+                  key={app.id}
+                  onClick={() => isAppInstalling ? {} : onSelectApp(app)}
+                  className={`cursor-pointer relative ${isDisabled && !isAppInstalling ? "opacity-50 pointer-events-none" : ""}`}
+                >
+                  <GridItem icon={app.icon} label={app.name} subtitle={isAppInstalling ? "Installing..." : undefined} />
+                  {isAppInstalled && !isAppInstalling && (
+                    <div className="absolute top-2 right-2 w-2 h-2 bg-green-500 rounded-full" title="Installed" />
+                  )}
+                  {isAppInstalling && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-xl">
+                      <svg className="animate-spin h-8 w-8 text-white" viewBox="0 0 24 24">
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@ import { useState, lazy, Suspense } from 'react';
 import { Text } from './ui/Text';
 import { LoadingPage } from './ui/LoadingPage';
 import { TaskbarButton } from './ui/TaskbarButton';
+import { ReactQueryProvider, XNodeClientProvider } from '../providers';
 
 type AppType = 'explorer' | 'taskmanager' | 'appstore' | 'settings' | null;
 
@@ -37,26 +38,30 @@ export default function Desktop() {
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      <main className="flex-1 p-6 overflow-auto">
-        <div className="h-full max-w-6xl mx-auto">
-          <Suspense fallback={activeApp ? <LoadingPage app={activeApp} /> : null}>
-            {renderApp()}
-          </Suspense>
+    <XNodeClientProvider>
+      <ReactQueryProvider>
+        <div className="flex flex-col h-screen">
+          <main className="flex-1 p-6 overflow-auto">
+            <div className="h-full max-w-6xl mx-auto">
+              <Suspense fallback={activeApp ? <LoadingPage app={activeApp} /> : null}>
+                {renderApp()}
+              </Suspense>
+            </div>
+          </main>
+          <div className="flex justify-center gap-2 p-2 bg-[var(--color-bg-secondary)]/80 border-t border-[var(--color-border)] backdrop-blur-xl">
+            {taskbarConfig.map((item) => (
+              <TaskbarButton
+                key={item.id}
+                icon={item.icon}
+                label={item.label}
+                variant={item.variant}
+                active={activeApp === item.id}
+                onClick={() => setActiveApp(item.id)}
+              />
+            ))}
+          </div>
         </div>
-      </main>
-      <div className="flex justify-center gap-2 p-2 bg-[var(--color-bg-secondary)]/80 border-t border-[var(--color-border)] backdrop-blur-xl">
-        {taskbarConfig.map((item) => (
-          <TaskbarButton
-            key={item.id}
-            icon={item.icon}
-            label={item.label}
-            variant={item.variant}
-            active={activeApp === item.id}
-            onClick={() => setActiveApp(item.id)}
-          />
-        ))}
-      </div>
-    </div>
+      </ReactQueryProvider>
+    </XNodeClientProvider>
   );
 }

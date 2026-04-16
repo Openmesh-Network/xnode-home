@@ -25,7 +25,7 @@ function queryString<Query extends QueryBase>(query: Query): string {
     }
   }
 
-  return new URLSearchParams(out).toString();
+  return `?${new URLSearchParams(out)}`;
 }
 
 function getUrl<Path, Query extends QueryBase | undefined>({

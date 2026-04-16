@@ -1,23 +1,15 @@
 import { useState } from "react";
-import { Dropdown } from "../ui/Dropdown";
-import { IconButton } from "../ui/IconButton";
 import { Text } from "../ui/Text";
 
 export function Breadcrumb({
   path,
   onNavigate,
-  onCreateFile,
-  onCreateFolder,
 }: {
   path: string[];
   onNavigate: (index: number) => void;
-  onCreateFile: () => void;
-  onCreateFolder: () => void;
 }) {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-
   return (
-    <div className="flex items-center gap-1 mb-4 flex-wrap">
+    <div className="flex items-center gap-1 flex-wrap">
       {path.map((segment, index) => (
         <div key={index} className="flex items-center">
           {index > 0 && <Text color="muted" className="mx-1">/</Text>}
@@ -29,18 +21,6 @@ export function Breadcrumb({
           </button>
         </div>
       ))}
-      <div className="relative ml-auto">
-        <IconButton icon="⋯" onClick={() => setDropdownOpen(!dropdownOpen)} />
-        {dropdownOpen && (
-          <Dropdown
-            items={[
-              { label: "Create File", icon: "📄", action: onCreateFile },
-              { label: "Create Folder", icon: "📁", action: onCreateFolder },
-            ]}
-            onClose={() => setDropdownOpen(false)}
-          />
-        )}
-      </div>
     </div>
   );
 }

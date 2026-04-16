@@ -16,7 +16,7 @@ export function Dropdown({
 }) {
   return (
     <>
-      <div className="fixed inset-0 z-[60]" onClick={onClose} />
+      <div className="fixed inset-0 z-[60]" onClick={(e) => { e.stopPropagation(); onClose(); }} />
       <div
         className={`absolute z-[70] bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-lg shadow-xl overflow-hidden min-w-[140px] ${
           alignRight ? "right-0" : "left-0"
@@ -26,9 +26,9 @@ export function Dropdown({
         {items.map((item, index) => (
           <button
             key={index}
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               item.action();
-              onClose();
             }}
             className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
               item.variant === "danger"

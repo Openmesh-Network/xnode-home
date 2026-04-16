@@ -7,11 +7,12 @@ import {
   useMutation,
 } from "../utils.js";
 import { xnode } from "@openmesh-network/xnode-manager-sdk";
-import { useQueryClient } from "@tanstack/react-query";
 
 export function useHostProcessLogs({
   client,
   process,
+  level,
+  max,
   overrides,
 }: UseQueryInput<
   xnode.host.process.logs_input,
@@ -25,18 +26,51 @@ export function useHostProcessLogs({
         "logs",
         client?.baseUrl ?? "",
         process ?? "",
+        level ?? "",
+        max ?? 0,
       ],
-      enabled: !!client && !!process,
-      refetchInterval: 1_000, // 1 second
-      queryFn: async () => {
-        if (!client || !process) {
-          return undefined;
-        }
 
-        return await xnode.host.process.logs({
+      enabled: !!client && !!process,
+      refetchInterval: 1000,
+
+      queryFn: async ({ client: queryClient }) => {
+        if (!client || !process) return [];
+
+        const previous =
+          queryClient.getQueryData<xnode.host.process.logs_output>([
+            "host",
+            "process",
+            "logs",
+            client.baseUrl,
+            process,
+            level ?? "",
+            max ?? 0,
+          ]) ?? [];
+
+        // All logs before this timestamp we've already received
+        const lastTimestamp =
+          previous.length > 1
+            ? previous[previous.length - 1]?.timestamp
+            : undefined;
+        // We only retain the logs from before this log, this log and everything after will be resent
+        const firstLogOfTimestamp =
+          lastTimestamp !== undefined
+            ? previous.findIndex((log) => log.timestamp === lastTimestamp)
+            : 0;
+
+        const next = await xnode.host.process.logs({
           client,
           path: { process },
+          query: {
+            after: lastTimestamp ?? null,
+            level: level ?? null,
+            max: max ?? null,
+          },
         });
+
+        return [...previous.slice(0, firstLogOfTimestamp), ...next].slice(
+          max ? -max : undefined
+        );
       },
     },
     overrides
@@ -120,11 +154,15 @@ export function useHostProcessStart(
   xnode.host.process.start_input,
   xnode.host.process.start_output
 > {
-  const queryClient = useQueryClient();
   return useMutation(
     {
       mutationFn: xnode.host.process.start,
-      onSuccess: (_, { client, path: { process } }) => {
+      onSuccess: (
+        _data,
+        { client, path: { process } },
+        _onMutateResult,
+        { client: queryClient }
+      ) => {
         Promise.all([
           queryClient.invalidateQueries({
             queryKey: ["host", "process", client.baseUrl, process],
@@ -145,11 +183,15 @@ export function useHostProcessStop(
   xnode.host.process.stop_input,
   xnode.host.process.stop_output
 > {
-  const queryClient = useQueryClient();
   return useMutation(
     {
       mutationFn: xnode.host.process.stop,
-      onSuccess: (_, { client, path: { process } }) => {
+      onSuccess: (
+        _data,
+        { client, path: { process } },
+        _onMutateResult,
+        { client: queryClient }
+      ) => {
         Promise.all([
           queryClient.invalidateQueries({
             queryKey: ["host", "process", client.baseUrl, process],
@@ -170,11 +212,15 @@ export function useHostProcessRestart(
   xnode.host.process.restart_input,
   xnode.host.process.restart_output
 > {
-  const queryClient = useQueryClient();
   return useMutation(
     {
       mutationFn: xnode.host.process.restart,
-      onSuccess: (_, { client, path: { process } }) => {
+      onSuccess: (
+        _data,
+        { client, path: { process } },
+        _onMutateResult,
+        { client: queryClient }
+      ) => {
         Promise.all([
           queryClient.invalidateQueries({
             queryKey: ["host", "process", client.baseUrl, process],
@@ -195,11 +241,15 @@ export function useHostProcessReload(
   xnode.host.process.reload_input,
   xnode.host.process.reload_output
 > {
-  const queryClient = useQueryClient();
   return useMutation(
     {
       mutationFn: xnode.host.process.reload,
-      onSuccess: (_, { client, path: { process } }) => {
+      onSuccess: (
+        _data,
+        { client, path: { process } },
+        _onMutateResult,
+        { client: queryClient }
+      ) => {
         Promise.all([
           queryClient.invalidateQueries({
             queryKey: ["host", "process", client.baseUrl, process],

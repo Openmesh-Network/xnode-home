@@ -3,6 +3,7 @@ import { Sidebar } from "../../layout/Sidebar";
 import { Text } from "../../ui/Text";
 import { SystemTab } from "./SystemTab";
 import { ProcessesTab } from "./ProcessesTab";
+import { AppsTab } from "./AppsTab";
 
 const sections = ["System", "Processes", "Performance", "Apps"];
 
@@ -23,11 +24,7 @@ export function TaskManager({ onClose }: { onClose: () => void }) {
           </div>
         );
       case "Apps":
-        return (
-          <div className="flex items-center justify-center h-full">
-            <Text color="muted">Startup apps management coming soon</Text>
-          </div>
-        );
+        return <AppsTab />;
       default:
         return <SystemTab />;
     }

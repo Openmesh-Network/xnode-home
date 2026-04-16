@@ -1,117 +1,211 @@
-import { Text } from "../../ui/Text";
+import { useState, useMemo } from "react";
 import { Card } from "../../ui/Card";
+import { Text } from "../../ui/Text";
+import { CircularMetric } from "../../ui/CircularMetric";
+import { MetricRow } from "../../ui/MetricRow";
+import { DetailModal } from "../../ui/DetailModal";
+import { useXNodeClient } from "../../../providers";
+import {
+  useHostUsageCpu,
+  useHostUsageMemory,
+  useHostUsageDisk,
+  useHostUsageNetwork,
+} from "../../../../sdk/react/src";
+import {
+  useDiskSpeedCalculator,
+  useNetworkSpeedCalculator,
+  type DiskUsageData,
+  type NetworkUsageData,
+} from "./useSpeedCalculators";
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+}
+
+function formatSpeed(bytesPerSec: number): string {
+  if (bytesPerSec === 0 || !isFinite(bytesPerSec) || isNaN(bytesPerSec))
+    return "0 B/s";
+  const k = 1024;
+  const sizes = ["B/s", "KB/s", "MB/s", "GB/s"];
+  const i = Math.floor(Math.log(bytesPerSec) / Math.log(k));
+  return parseFloat((bytesPerSec / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+}
+
+function LoadingState() {
+  return (
+    <div className="flex items-center justify-center h-32">
+      <Text color="muted">Loading...</Text>
+    </div>
+  );
+}
+
+function ErrorState({ message }: { message: string }) {
+  return (
+    <div className="flex items-center justify-center h-32">
+      <Text color="danger">Error: {message}</Text>
+    </div>
+  );
+}
+
+type DetailType = "cpu" | "disk" | "disk-bandwidth" | "network" | null;
 
 export function SystemTab() {
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-4 md:gap-6">
-        <SystemMetric label="CPU" value={23} unit="Intel i7" color="#6366f1" />
-        <SystemMetric
-          label="Memory"
-          value={67}
-          unit="10.7 / 16 GB"
-          color="#22c55e"
-        />
-        <SystemMetric
-          label="Storage"
-          value={45}
-          unit="450 / 1 TB"
-          color="#f59e0b"
-        />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card padding="md">
-          <Text
-            size="xs"
-            color="muted"
-            weight="semibold"
-            className="uppercase tracking-wider mb-3"
-          >
-            Disk Bandwidth
-          </Text>
-          <MetricRow label="Read" value="523 MB/s" />
-          <MetricRow label="Write" value="312 MB/s" />
-        </Card>
-        <Card padding="md">
-          <Text
-            size="xs"
-            color="muted"
-            weight="semibold"
-            className="uppercase tracking-wider mb-3"
-          >
-            Network
-          </Text>
-          <MetricRow label="Download" value="45.2 Mbps" />
-          <MetricRow label="Upload" value="12.8 Mbps" />
-        </Card>
-      </div>
-    </div>
-  );
-}
+  const client = useXNodeClient();
+  const cpuQuery = useHostUsageCpu({ client });
+  const memQuery = useHostUsageMemory({ client });
+  const diskQuery = useHostUsageDisk({ client });
+  const netQuery = useHostUsageNetwork({ client });
 
-function MetricRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between">
-      <Text size="sm" color="secondary">
-        {label}
-      </Text>
-      <Text size="sm" color="primary" weight="medium" className="font-mono">
-        {value}
-      </Text>
-    </div>
-  );
-}
+  const [detailType, setDetailType] = useState<DetailType>(null);
 
-function SystemMetric({
-  label,
-  value,
-  unit,
-  color,
-}: {
-  label: string;
-  value: number;
-  unit: string;
-  color: string;
-}) {
-  const circumference = 2 * Math.PI * 40;
-  const offset = circumference - (value / 100) * circumference;
+  const cpuData = (cpuQuery.data ?? []) as { name: string; used: number; frequency: number }[];
+  const memoryData = memQuery.data as { used: number; total: number } | undefined;
+  const diskData = (diskQuery.data ?? []) as DiskUsageData[];
+  const networkData = (netQuery.data ?? []) as NetworkUsageData[];
+
+  const diskSpeed = useDiskSpeedCalculator(diskData, diskQuery.dataUpdatedAt);
+  const networkInterfaces = useNetworkSpeedCalculator(networkData, netQuery.dataUpdatedAt);
+
+  const sortedInterfaces = useMemo(() => {
+    return [...networkInterfaces].sort((a, b) => a.name.localeCompare(b.name));
+  }, [networkInterfaces]);
+
+  const isLoading = cpuQuery.isLoading || memQuery.isLoading || diskQuery.isLoading || netQuery.isLoading;
+  const hasError = cpuQuery.error || memQuery.error || diskQuery.error || netQuery.error;
+
+  if (isLoading) return <LoadingState />;
+  if (hasError) return <ErrorState message={String(hasError)} />;
+
+  const totalCpuUsage = cpuData.length > 0
+    ? cpuData.reduce((sum: number, cpu) => sum + (cpu.used ?? 0), 0) / cpuData.length
+    : 0;
+
+  const memUsed = memoryData?.used ?? 0;
+  const memTotal = memoryData?.total ?? 0;
+  const memPercentage = memTotal > 0 ? (memUsed / memTotal) * 100 : 0;
+
+  const totalDiskUsed = diskData.reduce((sum, d) => sum + d.used, 0);
+  const totalDiskTotal = diskData.reduce((sum, d) => sum + d.total, 0);
+  const totalDiskPercentage = totalDiskTotal > 0 ? (totalDiskUsed / totalDiskTotal) * 100 : 0;
+
+  const totalDownload = sortedInterfaces.reduce((sum, ni) => sum + ni.downloadSpeed, 0);
+  const totalUpload = sortedInterfaces.reduce((sum, ni) => sum + ni.uploadSpeed, 0);
+
+  const cpuDetails = cpuData.map((cpu, i) => ({
+    label: cpu.name || `CPU ${i}`,
+    value: `${Math.round(cpu.used ?? 0)}%`,
+    subValue: cpu.frequency ? `${(cpu.frequency / 1000).toFixed(2)} GHz` : undefined,
+  }));
+
+  const diskCapacityDetails = diskData.map((disk) => ({
+    label: disk.mount_point || "Unknown",
+    value: `${formatBytes(disk.used)} / ${formatBytes(disk.total)}`,
+    subValue: undefined,
+  }));
+
+  const diskBandwidthDetails = diskSpeed.details.flatMap((disk) => [
+    {
+      label: `${disk.mount_point || "Unknown"} (Read)`,
+      value: formatSpeed(disk.readSpeed),
+      subValue: undefined,
+    },
+    {
+      label: `${disk.mount_point || "Unknown"} (Write)`,
+      value: formatSpeed(disk.writeSpeed),
+      subValue: undefined,
+    },
+  ]);
+
+  const networkDetails = sortedInterfaces.flatMap((ni) => [
+    {
+      label: `${ni.name} (Download)`,
+      value: formatSpeed(ni.downloadSpeed),
+      subValue: ni.addresses.length > 0 ? ni.addresses.join(", ") : undefined,
+    },
+    {
+      label: `${ni.name} (Upload)`,
+      value: formatSpeed(ni.uploadSpeed),
+      subValue: undefined,
+    },
+  ]);
+
   return (
-    <div className="flex flex-col items-center">
-      <div className="relative w-24 h-24">
-        <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-          <circle
-            cx="50"
-            cy="50"
-            r="40"
-            fill="none"
-            stroke="var(--color-bg-elevated)"
-            strokeWidth="8"
+    <>
+      <div className="space-y-6">
+        <div className="grid grid-cols-3 gap-4 md:gap-6">
+          <CircularMetric
+            label="CPU"
+            value={totalCpuUsage}
+            unit={cpuData.length > 0 ? `${cpuData.length} cores` : undefined}
+            color="#6366f1"
+            onClick={() => setDetailType("cpu")}
           />
-          <circle
-            cx="50"
-            cy="50"
-            r="40"
-            fill="none"
-            stroke={color}
-            strokeWidth="8"
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            strokeLinecap="round"
-            className="transition-all duration-500"
+          <CircularMetric
+            label="Memory"
+            value={memPercentage}
+            unit={`${formatBytes(memUsed)} / ${formatBytes(memTotal)}`}
+            color="#22c55e"
           />
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-xl font-bold text-[var(--color-text-primary)]">
-            {value}%
-          </span>
+          <CircularMetric
+            label="Disk"
+            value={totalDiskPercentage}
+            unit={`${formatBytes(totalDiskUsed)} / ${formatBytes(totalDiskTotal)}`}
+            color="#f59e0b"
+            onClick={() => setDetailType("disk")}
+          />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card
+            padding="md"
+            className="cursor-pointer hover:bg-[var(--color-bg-hover)] transition-colors"
+            onClick={() => setDetailType("disk-bandwidth")}
+          >
+            <Text
+              size="xs"
+              color="muted"
+              weight="semibold"
+              className="uppercase tracking-wider mb-3"
+            >
+              Disk Bandwidth
+            </Text>
+            <MetricRow label="Read" value={formatSpeed(diskSpeed.total.read)} mono />
+            <MetricRow label="Write" value={formatSpeed(diskSpeed.total.write)} mono />
+          </Card>
+          <Card
+            padding="md"
+            className="cursor-pointer hover:bg-[var(--color-bg-hover)] transition-colors"
+            onClick={() => setDetailType("network")}
+          >
+            <Text
+              size="xs"
+              color="muted"
+              weight="semibold"
+              className="uppercase tracking-wider mb-3"
+            >
+              Network
+            </Text>
+            <MetricRow label="Download" value={formatSpeed(totalDownload)} mono />
+            <MetricRow label="Upload" value={formatSpeed(totalUpload)} mono />
+          </Card>
         </div>
       </div>
-      <Text size="sm" color="secondary" className="mt-2">
-        {label}
-      </Text>
-      <Text size="xs" color="muted">
-        {unit}
-      </Text>
-    </div>
+
+      {detailType === "cpu" && (
+        <DetailModal title="CPU Details" items={cpuDetails} onClose={() => setDetailType(null)} />
+      )}
+      {detailType === "disk" && (
+        <DetailModal title="Disk Capacity" items={diskCapacityDetails} onClose={() => setDetailType(null)} />
+      )}
+      {detailType === "disk-bandwidth" && (
+        <DetailModal title="Disk Bandwidth" items={diskBandwidthDetails} onClose={() => setDetailType(null)} />
+      )}
+      {detailType === "network" && (
+        <DetailModal title="Network Speed" items={networkDetails} onClose={() => setDetailType(null)} />
+      )}
+    </>
   );
 }

@@ -7,7 +7,6 @@ import {
   useMutation,
 } from "../utils.js";
 import { xnode } from "@openmesh-network/xnode-manager-sdk";
-import { useQueryClient } from "@tanstack/react-query";
 
 export function useHostConfigGet({
   client,
@@ -43,11 +42,15 @@ export function useHostConfigSet(
   xnode.host.config.set_input,
   xnode.host.config.set_output
 > {
-  const queryClient = useQueryClient();
   return useMutation(
     {
       mutationFn: xnode.host.config.set,
-      onSuccess: (_, { client }) => {
+      onSuccess: (
+        _data,
+        { client },
+        _onMutateResult,
+        { client: queryClient }
+      ) => {
         Promise.all([
           queryClient.invalidateQueries({
             queryKey: ["host", "config", "get", client.baseUrl],
@@ -93,11 +96,15 @@ export function useHostConfigUpdate(
   xnode.host.config.update_input,
   xnode.host.config.update_output
 > {
-  const queryClient = useQueryClient();
   return useMutation(
     {
       mutationFn: xnode.host.config.update,
-      onSuccess: (_, { client }) => {
+      onSuccess: (
+        _data,
+        { client },
+        _onMutateResult,
+        { client: queryClient }
+      ) => {
         Promise.all([
           queryClient.invalidateQueries({
             queryKey: ["host", "config", "version", client.baseUrl],

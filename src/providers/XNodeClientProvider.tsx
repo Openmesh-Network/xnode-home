@@ -4,7 +4,7 @@ import { xnode } from "@openmesh-network/xnode-manager-sdk";
 type Client = xnode.common.utils.client.Client;
 type Login = xnode.common.utils.login.Login;
 
-const DEFAULT_BASE_URL = "https://manager.xnode.local";
+const DEFAULT_BASE_URL = "/xnode-forward/127.0.0.1";
 
 export type XNodeClientConfig = {
   baseUrl?: string;
@@ -16,7 +16,9 @@ export type XNodeClientContextValue = {
   client: Client;
 };
 
-export const XNodeClientContext = createContext<XNodeClientContextValue | null>(null);
+export const XNodeClientContext = createContext<XNodeClientContextValue | null>(
+  null,
+);
 
 export function XNodeClientProvider({
   children,
@@ -43,7 +45,9 @@ export function XNodeClientProvider({
 export function useXNodeClient(): Client {
   const context = useContext(XNodeClientContext);
   if (!context) {
-    throw new Error("useXNodeClient must be used within an XNodeClientProvider");
+    throw new Error(
+      "useXNodeClient must be used within an XNodeClientProvider",
+    );
   }
   return context.client;
 }
@@ -51,7 +55,9 @@ export function useXNodeClient(): Client {
 export function useXNodeClientConfig(): XNodeClientConfig {
   const context = useContext(XNodeClientContext);
   if (!context) {
-    throw new Error("useXNodeClientConfig must be used within an XNodeClientProvider");
+    throw new Error(
+      "useXNodeClientConfig must be used within an XNodeClientProvider",
+    );
   }
   return context.config;
 }

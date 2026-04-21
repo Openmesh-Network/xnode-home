@@ -264,6 +264,9 @@ async function create_folder$1(input) {
 async function read_link$1(input) {
     return JsonGet(input, (path) => `${scope$9(path)}/read_link`);
 }
+async function write_link$1(input) {
+    return RawPost(input, (path) => `${scope$9(path)}/write_link`);
+}
 async function get_permissions$1(input) {
     return JsonGet(input, (path) => `${scope$9(path)}/get_permissions`);
 }
@@ -285,7 +288,8 @@ var index$d = /*#__PURE__*/Object.freeze({
     scope: scope$9,
     set_permissions: set_permissions$1,
     size: size$1,
-    write_file: write_file$1
+    write_file: write_file$1,
+    write_link: write_link$1
 });
 
 function scope$8(path) {
@@ -359,6 +363,9 @@ var index$a = /*#__PURE__*/Object.freeze({
     usage: usage
 });
 
+async function create(input) {
+    return RawPost(input, (path) => `${scope$b(path)}/create`);
+}
 async function remove$1(input) {
     return RawPost(input, (path) => `${scope$b(path)}/remove`);
 }
@@ -366,6 +373,7 @@ async function remove$1(input) {
 var index$9 = /*#__PURE__*/Object.freeze({
     __proto__: null,
     config: index$e,
+    create: create,
     file: index$d,
     info: index$c,
     list: index$b,
@@ -439,6 +447,9 @@ async function create_folder(input) {
 async function read_link(input) {
     return JsonGet(input, `${scope$4()}/read_link`);
 }
+async function write_link(input) {
+    return RawPost(input, `${scope$4()}/write_link`);
+}
 async function get_permissions(input) {
     return JsonGet(input, `${scope$4()}/get_permissions`);
 }
@@ -460,7 +471,8 @@ var index$7 = /*#__PURE__*/Object.freeze({
     scope: scope$4,
     set_permissions: set_permissions,
     size: size,
-    write_file: write_file
+    write_file: write_file,
+    write_link: write_link
 });
 
 function scope$3() {

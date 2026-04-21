@@ -1,5 +1,5 @@
 import { xnode } from '@openmesh-network/xnode-manager-sdk';
-import { useQuery as useQuery$1, useMutation as useMutation$1 } from '@tanstack/react-query';
+import { useQuery as useQuery$1, useMutation as useMutation$1, useQueryClient } from '@tanstack/react-query';
 
 function useQuery(options, overrides) {
     return useQuery$1({
@@ -12,9 +12,9 @@ function useMutation(options, overrides) {
     return useMutation$1({
         ...options,
         ...overrides,
-        onSuccess(data, variables, onMutateResult, context) {
-            overrides?.onSuccess?.(data, variables, onMutateResult, context);
-            options?.onSuccess?.(data, variables, onMutateResult, context);
+        onSuccess(data, variables, context) {
+            overrides?.onSuccess?.(data, variables, context);
+            options?.onSuccess?.(data, variables, context);
         },
     });
 }
@@ -47,9 +47,10 @@ function useContainerConfigGet({ client, container, overrides, }) {
     }, overrides);
 }
 function useContainerConfigSet(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.container.config.set,
-        onSuccess: (_data, { client, path: { container } }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client, path: { container } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [client.baseUrl, "container", container, "config", "get"],
@@ -80,9 +81,10 @@ function useContainerConfigVersion({ client, container, overrides, }) {
     }, overrides);
 }
 function useContainerConfigUpdate(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.container.config.update,
-        onSuccess: (_data, { client, path: { container } }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client, path: { container } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [
@@ -157,9 +159,10 @@ function useContainerFileSize({ client, container, path, overrides, }) {
     }, overrides);
 }
 function useContainerFileMove(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.container.file.move,
-        onSuccess: (_data, { client, path: { container }, data: { source, destination } }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client, path: { container }, data: { source, destination } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [client.baseUrl, "container", container, "file", source],
@@ -178,9 +181,10 @@ function useContainerFileMove(input = {}) {
     }, input?.overrides);
 }
 function useContainerFileRemove(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.container.file.remove,
-        onSuccess: (_data, { client, path: { container }, query: { path } }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client, path: { container }, query: { path } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [client.baseUrl, "container", container, "file", path],
@@ -190,9 +194,10 @@ function useContainerFileRemove(input = {}) {
     }, input?.overrides);
 }
 function useContainerFileCopy(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.container.file.copy,
-        onSuccess: (_data, { client, path: { container }, data: { destination } }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client, path: { container }, data: { destination } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [
@@ -233,9 +238,10 @@ function useContainerFileReadFile({ client, container, path, overrides, }) {
     }, overrides);
 }
 function useContainerFileWriteFile(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.container.file.write_file,
-        onSuccess: (_data, { client, path: { container }, query: { path } }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client, path: { container }, query: { path } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [client.baseUrl, "container", container, "file", path],
@@ -271,9 +277,10 @@ function useContainerFileReadFolder({ client, container, path, metadata, overrid
     }, overrides);
 }
 function useContainerFileCreateFolder(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.container.file.create_folder,
-        onSuccess: (_data, { client, path: { container }, query: { path } }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client, path: { container }, query: { path } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [client.baseUrl, "container", container, "file", path],
@@ -307,6 +314,25 @@ function useContainerFileReadLink({ client, container, path, overrides, }) {
         },
     }, overrides);
 }
+function useContainerWriteLink(input = {}) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: xnode.container.file.write_link,
+        onSuccess: (_data, { client, path: { container }, data: { destination } }) => {
+            Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        client.baseUrl,
+                        "container",
+                        container,
+                        "file",
+                        destination,
+                    ],
+                }),
+            ]);
+        },
+    }, input?.overrides);
+}
 function useContainerFileGetPermissions({ client, container, path, overrides, }) {
     return useQuery({
         queryKey: [
@@ -333,9 +359,10 @@ function useContainerFileGetPermissions({ client, container, path, overrides, })
     }, overrides);
 }
 function useContainerFileSetPermissions(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.container.file.set_permissions,
-        onSuccess: (_data, { client, path: { container }, query: { path } }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client, path: { container }, query: { path } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [
@@ -491,9 +518,10 @@ function useContainerProcessUsage({ client, process, overrides, }) {
     }, overrides);
 }
 function useContainerProcessStart(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.host.process.start,
-        onSuccess: (_data, { client, path: { process } }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client, path: { process } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [client.baseUrl, "host", "process", process],
@@ -503,9 +531,10 @@ function useContainerProcessStart(input = {}) {
     }, input?.overrides);
 }
 function useContainerProcessStop(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.host.process.stop,
-        onSuccess: (_data, { client, path: { process } }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client, path: { process } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [client.baseUrl, "host", "process", process],
@@ -515,9 +544,10 @@ function useContainerProcessStop(input = {}) {
     }, input?.overrides);
 }
 function useContainerProcessRestart(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.host.process.restart,
-        onSuccess: (_data, { client, path: { process } }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client, path: { process } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [client.baseUrl, "host", "process", process],
@@ -527,9 +557,10 @@ function useContainerProcessRestart(input = {}) {
     }, input?.overrides);
 }
 function useContainerProcessReload(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.host.process.reload,
-        onSuccess: (_data, { client, path: { process } }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client, path: { process } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [client.baseUrl, "host", "process", process],
@@ -539,13 +570,30 @@ function useContainerProcessReload(input = {}) {
     }, input?.overrides);
 }
 
+function useContainerCreate(input = {}) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: xnode.container.create,
+        onSuccess: (_data, { client }) => {
+            Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: [client.baseUrl, "host", "list", "container"],
+                }),
+            ]);
+        },
+    }, input?.overrides);
+}
 function useContainerRemove(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.container.remove,
-        onSuccess: (_data, { client, path: { container } }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client, path: { container } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [client.baseUrl, "container", container],
+                }),
+                queryClient.invalidateQueries({
+                    queryKey: [client.baseUrl, "host", "list", "container"],
                 }),
             ]);
         },
@@ -567,9 +615,10 @@ function useHostConfigGet({ client, overrides, }) {
     }, overrides);
 }
 function useHostConfigSet(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.host.config.set,
-        onSuccess: (_data, { client }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [client.baseUrl, "host", "config", "get"],
@@ -593,9 +642,10 @@ function useHostConfigVersion({ client, overrides, }) {
     }, overrides);
 }
 function useHostConfigUpdate(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.host.config.update,
-        onSuccess: (_data, { client }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [client.baseUrl, "host", "config", "version"],
@@ -648,9 +698,10 @@ function useHostFileSize({ client, path, overrides, }) {
     }, overrides);
 }
 function useHostFileMove(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.host.file.move,
-        onSuccess: (_data, { client, data: { source, destination } }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client, data: { source, destination } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [client.baseUrl, "host", "file", source],
@@ -663,9 +714,10 @@ function useHostFileMove(input = {}) {
     }, input?.overrides);
 }
 function useHostFileRemove(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.host.file.remove,
-        onSuccess: (_data, { client, query: { path } }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client, query: { path } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [client.baseUrl, "host", "file", path],
@@ -675,9 +727,10 @@ function useHostFileRemove(input = {}) {
     }, input?.overrides);
 }
 function useHostFileCopy(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.host.file.copy,
-        onSuccess: (_data, { client, data: { destination } }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client, data: { destination } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [client.baseUrl, "host", "file", destination],
@@ -710,9 +763,10 @@ function useHostFileReadFile({ client, path, overrides, }) {
     }, overrides);
 }
 function useHostFileWriteFile(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.host.file.write_file,
-        onSuccess: (_data, { client, query: { path } }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client, query: { path } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [client.baseUrl, "host", "file", path],
@@ -746,9 +800,10 @@ function useHostFileReadFolder({ client, path, metadata, overrides, }) {
     }, overrides);
 }
 function useHostFileCreateFolder(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.host.file.create_folder,
-        onSuccess: (_data, { client, query: { path } }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client, query: { path } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [client.baseUrl, "host", "file", path],
@@ -780,6 +835,19 @@ function useHostFileReadLink({ client, path, overrides, }) {
         },
     }, overrides);
 }
+function useHostFileWriteLink(input = {}) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: xnode.host.file.write_link,
+        onSuccess: (_data, { client, data: { destination } }) => {
+            Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: [client.baseUrl, "host", "file", destination],
+                }),
+            ]);
+        },
+    }, input?.overrides);
+}
 function useHostFileGetPermissions({ client, path, overrides, }) {
     return useQuery({
         queryKey: [
@@ -804,9 +872,10 @@ function useHostFileGetPermissions({ client, path, overrides, }) {
     }, overrides);
 }
 function useHostFileSetPermissions(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.host.file.set_permissions,
-        onSuccess: (_data, { client, query: { path } }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client, query: { path } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [
@@ -1032,9 +1101,10 @@ function useHostProcessUsage({ client, process, overrides, }) {
     }, overrides);
 }
 function useHostProcessStart(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.host.process.start,
-        onSuccess: (_data, { client, path: { process } }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client, path: { process } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [client.baseUrl, "host", "process", process],
@@ -1044,9 +1114,10 @@ function useHostProcessStart(input = {}) {
     }, input?.overrides);
 }
 function useHostProcessStop(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.host.process.stop,
-        onSuccess: (_data, { client, path: { process } }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client, path: { process } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [client.baseUrl, "host", "process", process],
@@ -1056,9 +1127,10 @@ function useHostProcessStop(input = {}) {
     }, input?.overrides);
 }
 function useHostProcessRestart(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.host.process.restart,
-        onSuccess: (_data, { client, path: { process } }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client, path: { process } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [client.baseUrl, "host", "process", process],
@@ -1068,9 +1140,10 @@ function useHostProcessRestart(input = {}) {
     }, input?.overrides);
 }
 function useHostProcessReload(input = {}) {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: xnode.host.process.reload,
-        onSuccess: (_data, { client, path: { process } }, _onMutateResult, { client: queryClient }) => {
+        onSuccess: (_data, { client, path: { process } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: [client.baseUrl, "host", "process", process],
@@ -1156,4 +1229,4 @@ function useHostUsageGpu({ client, overrides, }) {
     }, overrides);
 }
 
-export { useContainerConfigApply, useContainerConfigBuild, useContainerConfigGet, useContainerConfigSet, useContainerConfigUpdate, useContainerConfigVersion, useContainerFileCopy, useContainerFileCreateFolder, useContainerFileGetPermissions, useContainerFileMetadata, useContainerFileMove, useContainerFileReadFile, useContainerFileReadFolder, useContainerFileReadLink, useContainerFileRemove, useContainerFileSetPermissions, useContainerFileSize, useContainerFileWriteFile, useContainerInfoUsersGroups, useContainerInfoUsersUsers, useContainerListProcess, useContainerProcessLogs, useContainerProcessReload, useContainerProcessRestart, useContainerProcessStart, useContainerProcessStatus, useContainerProcessStop, useContainerProcessUsage, useContainerRemove, useHostConfigApply, useHostConfigBuild, useHostConfigGet, useHostConfigSet, useHostConfigUpdate, useHostConfigVersion, useHostFileCopy, useHostFileCreateFolder, useHostFileGetPermissions, useHostFileMetadata, useHostFileMove, useHostFileReadFile, useHostFileReadFolder, useHostFileReadLink, useHostFileRemove, useHostFileSetPermissions, useHostFileSize, useHostFileWriteFile, useHostInfoEval, useHostInfoFlakeMetadata, useHostInfoUsersGroups, useHostInfoUsersUsers, useHostListContainer, useHostListProcess, useHostPowerOff, useHostPowerReboot, useHostProcessLogs, useHostProcessReload, useHostProcessRestart, useHostProcessStart, useHostProcessStatus, useHostProcessStop, useHostProcessUsage, useHostUsageCpu, useHostUsageDisk, useHostUsageGpu, useHostUsageMemory, useHostUsageNetwork, utils };
+export { useContainerConfigApply, useContainerConfigBuild, useContainerConfigGet, useContainerConfigSet, useContainerConfigUpdate, useContainerConfigVersion, useContainerCreate, useContainerFileCopy, useContainerFileCreateFolder, useContainerFileGetPermissions, useContainerFileMetadata, useContainerFileMove, useContainerFileReadFile, useContainerFileReadFolder, useContainerFileReadLink, useContainerFileRemove, useContainerFileSetPermissions, useContainerFileSize, useContainerFileWriteFile, useContainerInfoUsersGroups, useContainerInfoUsersUsers, useContainerListProcess, useContainerProcessLogs, useContainerProcessReload, useContainerProcessRestart, useContainerProcessStart, useContainerProcessStatus, useContainerProcessStop, useContainerProcessUsage, useContainerRemove, useContainerWriteLink, useHostConfigApply, useHostConfigBuild, useHostConfigGet, useHostConfigSet, useHostConfigUpdate, useHostConfigVersion, useHostFileCopy, useHostFileCreateFolder, useHostFileGetPermissions, useHostFileMetadata, useHostFileMove, useHostFileReadFile, useHostFileReadFolder, useHostFileReadLink, useHostFileRemove, useHostFileSetPermissions, useHostFileSize, useHostFileWriteFile, useHostFileWriteLink, useHostInfoEval, useHostInfoFlakeMetadata, useHostInfoUsersGroups, useHostInfoUsersUsers, useHostListContainer, useHostListProcess, useHostPowerOff, useHostPowerReboot, useHostProcessLogs, useHostProcessReload, useHostProcessRestart, useHostProcessStart, useHostProcessStatus, useHostProcessStop, useHostProcessUsage, useHostUsageCpu, useHostUsageDisk, useHostUsageGpu, useHostUsageMemory, useHostUsageNetwork, utils };

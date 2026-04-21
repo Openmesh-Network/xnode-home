@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import {
   type UseQueryInput,
   type UseMutationOutput,
@@ -42,15 +43,11 @@ export function useHostConfigSet(
   xnode.host.config.set_input,
   xnode.host.config.set_output
 > {
+  const queryClient = useQueryClient();
   return useMutation(
     {
       mutationFn: xnode.host.config.set,
-      onSuccess: (
-        _data,
-        { client },
-        _onMutateResult,
-        { client: queryClient }
-      ) => {
+      onSuccess: (_data, { client }) => {
         Promise.all([
           queryClient.invalidateQueries({
             queryKey: [client.baseUrl, "host", "config", "get"],
@@ -96,15 +93,11 @@ export function useHostConfigUpdate(
   xnode.host.config.update_input,
   xnode.host.config.update_output
 > {
+  const queryClient = useQueryClient();
   return useMutation(
     {
       mutationFn: xnode.host.config.update,
-      onSuccess: (
-        _data,
-        { client },
-        _onMutateResult,
-        { client: queryClient }
-      ) => {
+      onSuccess: (_data, { client }) => {
         Promise.all([
           queryClient.invalidateQueries({
             queryKey: [client.baseUrl, "host", "config", "version"],

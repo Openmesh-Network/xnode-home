@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import {
   type UseQueryInput,
   type UseMutationOutput,
@@ -50,15 +51,11 @@ export function useContainerConfigSet(
   xnode.container.config.set_input,
   xnode.container.config.set_output
 > {
+  const queryClient = useQueryClient();
   return useMutation(
     {
       mutationFn: xnode.container.config.set,
-      onSuccess: (
-        _data,
-        { client, path: { container } },
-        _onMutateResult,
-        { client: queryClient }
-      ) => {
+      onSuccess: (_data, { client, path: { container } }) => {
         Promise.all([
           queryClient.invalidateQueries({
             queryKey: [client.baseUrl, "container", container, "config", "get"],
@@ -112,15 +109,11 @@ export function useContainerConfigUpdate(
   xnode.container.config.update_input,
   xnode.container.config.update_output
 > {
+  const queryClient = useQueryClient();
   return useMutation(
     {
       mutationFn: xnode.container.config.update,
-      onSuccess: (
-        _data,
-        { client, path: { container } },
-        _onMutateResult,
-        { client: queryClient }
-      ) => {
+      onSuccess: (_data, { client, path: { container } }) => {
         Promise.all([
           queryClient.invalidateQueries({
             queryKey: [

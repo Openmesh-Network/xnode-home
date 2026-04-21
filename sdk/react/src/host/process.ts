@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import {
   type UseQueryInput,
   type UseMutationOutput,
@@ -154,15 +155,11 @@ export function useHostProcessStart(
   xnode.host.process.start_input,
   xnode.host.process.start_output
 > {
+  const queryClient = useQueryClient();
   return useMutation(
     {
       mutationFn: xnode.host.process.start,
-      onSuccess: (
-        _data,
-        { client, path: { process } },
-        _onMutateResult,
-        { client: queryClient }
-      ) => {
+      onSuccess: (_data, { client, path: { process } }) => {
         Promise.all([
           queryClient.invalidateQueries({
             queryKey: [client.baseUrl, "host", "process", process],
@@ -183,15 +180,11 @@ export function useHostProcessStop(
   xnode.host.process.stop_input,
   xnode.host.process.stop_output
 > {
+  const queryClient = useQueryClient();
   return useMutation(
     {
       mutationFn: xnode.host.process.stop,
-      onSuccess: (
-        _data,
-        { client, path: { process } },
-        _onMutateResult,
-        { client: queryClient }
-      ) => {
+      onSuccess: (_data, { client, path: { process } }) => {
         Promise.all([
           queryClient.invalidateQueries({
             queryKey: [client.baseUrl, "host", "process", process],
@@ -212,15 +205,11 @@ export function useHostProcessRestart(
   xnode.host.process.restart_input,
   xnode.host.process.restart_output
 > {
+  const queryClient = useQueryClient();
   return useMutation(
     {
       mutationFn: xnode.host.process.restart,
-      onSuccess: (
-        _data,
-        { client, path: { process } },
-        _onMutateResult,
-        { client: queryClient }
-      ) => {
+      onSuccess: (_data, { client, path: { process } }) => {
         Promise.all([
           queryClient.invalidateQueries({
             queryKey: [client.baseUrl, "host", "process", process],
@@ -241,15 +230,11 @@ export function useHostProcessReload(
   xnode.host.process.reload_input,
   xnode.host.process.reload_output
 > {
+  const queryClient = useQueryClient();
   return useMutation(
     {
       mutationFn: xnode.host.process.reload,
-      onSuccess: (
-        _data,
-        { client, path: { process } },
-        _onMutateResult,
-        { client: queryClient }
-      ) => {
+      onSuccess: (_data, { client, path: { process } }) => {
         Promise.all([
           queryClient.invalidateQueries({
             queryKey: [client.baseUrl, "host", "process", process],

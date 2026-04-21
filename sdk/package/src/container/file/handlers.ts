@@ -122,6 +122,17 @@ export async function read_link(
   return JsonGet(input, (path) => `${scope(path)}/read_link`);
 }
 
+export type write_link_input = WithClient<{
+  path: ContainerPath;
+  data: SourceDestinationData;
+}>;
+export type write_link_output = ResponseResult<Bytes>;
+export async function write_link(
+  input: write_link_input
+): Promise<write_link_output> {
+  return RawPost(input, (path) => `${scope(path)}/write_link`);
+}
+
 export type get_permissions_input = WithClient<{
   path: ContainerPath;
   query: PathQuery;

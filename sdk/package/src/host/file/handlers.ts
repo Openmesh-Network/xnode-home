@@ -98,6 +98,14 @@ export async function read_link(
   return JsonGet(input, `${scope()}/read_link`);
 }
 
+export type write_link_input = WithClient<{ data: SourceDestinationData }>;
+export type write_link_output = ResponseResult<Bytes>;
+export async function write_link(
+  input: write_link_input
+): Promise<write_link_output> {
+  return RawPost(input, `${scope()}/write_link`);
+}
+
 export type get_permissions_input = WithClient<{ query: PathQuery }>;
 export type get_permissions_output = ResponseResult<rust_types.Vec<Permission>>;
 export async function get_permissions(

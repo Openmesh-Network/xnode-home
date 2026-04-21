@@ -66,9 +66,9 @@ export function useMutation<Input, Output>(
   return TanstackUseMutation({
     ...options,
     ...overrides,
-    onSuccess(data, variables, onMutateResult, context) {
-      overrides?.onSuccess?.(data, variables, onMutateResult, context);
-      options?.onSuccess?.(data, variables, onMutateResult, context);
+    onSuccess(data, variables, context) {
+      overrides?.onSuccess?.(data, variables, context);
+      options?.onSuccess?.(data, variables, context);
     },
   });
 }

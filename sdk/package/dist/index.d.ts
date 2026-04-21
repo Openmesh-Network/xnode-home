@@ -418,6 +418,12 @@ type read_link_input$1 = WithClient<{
 }>;
 type read_link_output$1 = ResponseResult<String>;
 declare function read_link$1(input: read_link_input$1): Promise<read_link_output$1>;
+type write_link_input$1 = WithClient<{
+    path: ContainerPath;
+    data: SourceDestinationData;
+}>;
+type write_link_output$1 = ResponseResult<Bytes>;
+declare function write_link$1(input: write_link_input$1): Promise<write_link_output$1>;
 type get_permissions_input$1 = WithClient<{
     path: ContainerPath;
     query: PathQuery;
@@ -433,8 +439,8 @@ type set_permissions_output$1 = ResponseResult<Bytes>;
 declare function set_permissions$1(input: set_permissions_input$1): Promise<set_permissions_output$1>;
 
 declare namespace index_d$d {
-  export { copy$1 as copy, create_folder$1 as create_folder, get_permissions$1 as get_permissions, metadata$1 as metadata, move$1 as move, read_file$1 as read_file, read_folder$1 as read_folder, read_link$1 as read_link, remove$2 as remove, scope$a as scope, set_permissions$1 as set_permissions, size$1 as size, write_file$1 as write_file };
-  export type { copy_input$1 as copy_input, copy_output$1 as copy_output, create_folder_input$1 as create_folder_input, create_folder_output$1 as create_folder_output, get_permissions_input$1 as get_permissions_input, get_permissions_output$1 as get_permissions_output, metadata_input$1 as metadata_input, metadata_output$1 as metadata_output, move_input$1 as move_input, move_output$1 as move_output, read_file_input$1 as read_file_input, read_file_output$1 as read_file_output, read_folder_input$1 as read_folder_input, read_folder_output$1 as read_folder_output, read_link_input$1 as read_link_input, read_link_output$1 as read_link_output, remove_input$2 as remove_input, remove_output$2 as remove_output, set_permissions_input$1 as set_permissions_input, set_permissions_output$1 as set_permissions_output, size_input$1 as size_input, size_output$1 as size_output, write_file_input$1 as write_file_input, write_file_output$1 as write_file_output };
+  export { copy$1 as copy, create_folder$1 as create_folder, get_permissions$1 as get_permissions, metadata$1 as metadata, move$1 as move, read_file$1 as read_file, read_folder$1 as read_folder, read_link$1 as read_link, remove$2 as remove, scope$a as scope, set_permissions$1 as set_permissions, size$1 as size, write_file$1 as write_file, write_link$1 as write_link };
+  export type { copy_input$1 as copy_input, copy_output$1 as copy_output, create_folder_input$1 as create_folder_input, create_folder_output$1 as create_folder_output, get_permissions_input$1 as get_permissions_input, get_permissions_output$1 as get_permissions_output, metadata_input$1 as metadata_input, metadata_output$1 as metadata_output, move_input$1 as move_input, move_output$1 as move_output, read_file_input$1 as read_file_input, read_file_output$1 as read_file_output, read_folder_input$1 as read_folder_input, read_folder_output$1 as read_folder_output, read_link_input$1 as read_link_input, read_link_output$1 as read_link_output, remove_input$2 as remove_input, remove_output$2 as remove_output, set_permissions_input$1 as set_permissions_input, set_permissions_output$1 as set_permissions_output, size_input$1 as size_input, size_output$1 as size_output, write_file_input$1 as write_file_input, write_file_output$1 as write_file_output, write_link_input$1 as write_link_input, write_link_output$1 as write_link_output };
 }
 
 declare function scope$9<Path extends ContainerPath>(path: Path): string;
@@ -522,15 +528,23 @@ declare namespace index_d$a {
   export type { ProcessPath$1 as ProcessPath, logs_input$1 as logs_input, logs_output$1 as logs_output, reload_input$1 as reload_input, reload_output$1 as reload_output, restart_input$1 as restart_input, restart_output$1 as restart_output, start_input$1 as start_input, start_output$1 as start_output, status_input$1 as status_input, status_output$1 as status_output, stop_input$1 as stop_input, stop_output$1 as stop_output, usage_input$1 as usage_input, usage_output$1 as usage_output };
 }
 
+type create_input = WithClient<{
+    path: ContainerPath;
+}>;
+type create_output = ResponseResult<Bytes>;
+declare function create(input: create_input): Promise<create_output>;
 type remove_input$1 = WithClient<{
     path: ContainerPath;
 }>;
 type remove_output$1 = ResponseResult<Bytes>;
 declare function remove$1(input: remove_input$1): Promise<remove_output$1>;
 
+declare const index_d$9_create: typeof create;
+type index_d$9_create_input = create_input;
+type index_d$9_create_output = create_output;
 declare namespace index_d$9 {
-  export { index_d$e as config, index_d$d as file, index_d$c as info, index_d$b as list, index_d$a as process, remove$1 as remove };
-  export type { remove_input$1 as remove_input, remove_output$1 as remove_output };
+  export { index_d$e as config, index_d$9_create as create, index_d$d as file, index_d$c as info, index_d$b as list, index_d$a as process, remove$1 as remove };
+  export type { index_d$9_create_input as create_input, index_d$9_create_output as create_output, remove_input$1 as remove_input, remove_output$1 as remove_output };
 }
 
 declare function scope$6(): string;
@@ -637,6 +651,11 @@ type read_link_input = WithClient<{
 }>;
 type read_link_output = ResponseResult<String>;
 declare function read_link(input: read_link_input): Promise<read_link_output>;
+type write_link_input = WithClient<{
+    data: SourceDestinationData;
+}>;
+type write_link_output = ResponseResult<Bytes>;
+declare function write_link(input: write_link_input): Promise<write_link_output>;
 type get_permissions_input = WithClient<{
     query: PathQuery;
 }>;
@@ -685,9 +704,12 @@ type index_d$7_size_output = size_output;
 declare const index_d$7_write_file: typeof write_file;
 type index_d$7_write_file_input = write_file_input;
 type index_d$7_write_file_output = write_file_output;
+declare const index_d$7_write_link: typeof write_link;
+type index_d$7_write_link_input = write_link_input;
+type index_d$7_write_link_output = write_link_output;
 declare namespace index_d$7 {
-  export { index_d$7_copy as copy, index_d$7_create_folder as create_folder, index_d$7_get_permissions as get_permissions, index_d$7_metadata as metadata, index_d$7_move as move, index_d$7_read_file as read_file, index_d$7_read_folder as read_folder, index_d$7_read_link as read_link, index_d$7_remove as remove, scope$5 as scope, index_d$7_set_permissions as set_permissions, index_d$7_size as size, index_d$7_write_file as write_file };
-  export type { index_d$7_copy_input as copy_input, index_d$7_copy_output as copy_output, index_d$7_create_folder_input as create_folder_input, index_d$7_create_folder_output as create_folder_output, index_d$7_get_permissions_input as get_permissions_input, index_d$7_get_permissions_output as get_permissions_output, index_d$7_metadata_input as metadata_input, index_d$7_metadata_output as metadata_output, index_d$7_move_input as move_input, index_d$7_move_output as move_output, index_d$7_read_file_input as read_file_input, index_d$7_read_file_output as read_file_output, index_d$7_read_folder_input as read_folder_input, index_d$7_read_folder_output as read_folder_output, index_d$7_read_link_input as read_link_input, index_d$7_read_link_output as read_link_output, index_d$7_remove_input as remove_input, index_d$7_remove_output as remove_output, index_d$7_set_permissions_input as set_permissions_input, index_d$7_set_permissions_output as set_permissions_output, index_d$7_size_input as size_input, index_d$7_size_output as size_output, index_d$7_write_file_input as write_file_input, index_d$7_write_file_output as write_file_output };
+  export { index_d$7_copy as copy, index_d$7_create_folder as create_folder, index_d$7_get_permissions as get_permissions, index_d$7_metadata as metadata, index_d$7_move as move, index_d$7_read_file as read_file, index_d$7_read_folder as read_folder, index_d$7_read_link as read_link, index_d$7_remove as remove, scope$5 as scope, index_d$7_set_permissions as set_permissions, index_d$7_size as size, index_d$7_write_file as write_file, index_d$7_write_link as write_link };
+  export type { index_d$7_copy_input as copy_input, index_d$7_copy_output as copy_output, index_d$7_create_folder_input as create_folder_input, index_d$7_create_folder_output as create_folder_output, index_d$7_get_permissions_input as get_permissions_input, index_d$7_get_permissions_output as get_permissions_output, index_d$7_metadata_input as metadata_input, index_d$7_metadata_output as metadata_output, index_d$7_move_input as move_input, index_d$7_move_output as move_output, index_d$7_read_file_input as read_file_input, index_d$7_read_file_output as read_file_output, index_d$7_read_folder_input as read_folder_input, index_d$7_read_folder_output as read_folder_output, index_d$7_read_link_input as read_link_input, index_d$7_read_link_output as read_link_output, index_d$7_remove_input as remove_input, index_d$7_remove_output as remove_output, index_d$7_set_permissions_input as set_permissions_input, index_d$7_set_permissions_output as set_permissions_output, index_d$7_size_input as size_input, index_d$7_size_output as size_output, index_d$7_write_file_input as write_file_input, index_d$7_write_file_output as write_file_output, index_d$7_write_link_input as write_link_input, index_d$7_write_link_output as write_link_output };
 }
 
 type FlakeQuery = {

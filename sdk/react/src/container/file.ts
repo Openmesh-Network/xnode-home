@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import {
   type UseQueryInput,
   type UseMutationOutput,
@@ -91,14 +92,13 @@ export function useContainerFileMove(
   xnode.container.file.move_input,
   xnode.container.file.move_output
 > {
+  const queryClient = useQueryClient();
   return useMutation(
     {
       mutationFn: xnode.container.file.move,
       onSuccess: (
         _data,
-        { client, path: { container }, data: { source, destination } },
-        _onMutateResult,
-        { client: queryClient }
+        { client, path: { container }, data: { source, destination } }
       ) => {
         Promise.all([
           queryClient.invalidateQueries({
@@ -129,15 +129,11 @@ export function useContainerFileRemove(
   xnode.container.file.remove_input,
   xnode.container.file.remove_output
 > {
+  const queryClient = useQueryClient();
   return useMutation(
     {
       mutationFn: xnode.container.file.remove,
-      onSuccess: (
-        _data,
-        { client, path: { container }, query: { path } },
-        _onMutateResult,
-        { client: queryClient }
-      ) => {
+      onSuccess: (_data, { client, path: { container }, query: { path } }) => {
         Promise.all([
           queryClient.invalidateQueries({
             queryKey: [client.baseUrl, "container", container, "file", path],
@@ -158,14 +154,13 @@ export function useContainerFileCopy(
   xnode.container.file.copy_input,
   xnode.container.file.copy_output
 > {
+  const queryClient = useQueryClient();
   return useMutation(
     {
       mutationFn: xnode.container.file.copy,
       onSuccess: (
         _data,
-        { client, path: { container }, data: { destination } },
-        _onMutateResult,
-        { client: queryClient }
+        { client, path: { container }, data: { destination } }
       ) => {
         Promise.all([
           queryClient.invalidateQueries({
@@ -231,15 +226,11 @@ export function useContainerFileWriteFile(
   xnode.container.file.write_file_input,
   xnode.container.file.write_file_output
 > {
+  const queryClient = useQueryClient();
   return useMutation(
     {
       mutationFn: xnode.container.file.write_file,
-      onSuccess: (
-        _data,
-        { client, path: { container }, query: { path } },
-        _onMutateResult,
-        { client: queryClient }
-      ) => {
+      onSuccess: (_data, { client, path: { container }, query: { path } }) => {
         Promise.all([
           queryClient.invalidateQueries({
             queryKey: [client.baseUrl, "container", container, "file", path],
@@ -300,15 +291,11 @@ export function useContainerFileCreateFolder(
   xnode.container.file.create_folder_input,
   xnode.container.file.create_folder_output
 > {
+  const queryClient = useQueryClient();
   return useMutation(
     {
       mutationFn: xnode.container.file.create_folder,
-      onSuccess: (
-        _data,
-        { client, path: { container }, query: { path } },
-        _onMutateResult,
-        { client: queryClient }
-      ) => {
+      onSuccess: (_data, { client, path: { container }, query: { path } }) => {
         Promise.all([
           queryClient.invalidateQueries({
             queryKey: [client.baseUrl, "container", container, "file", path],
@@ -355,6 +342,40 @@ export function useContainerFileReadLink({
       },
     },
     overrides
+  );
+}
+
+export function useContainerWriteLink(
+  input: UseMutationInput<
+    xnode.container.file.write_link_input,
+    xnode.container.file.write_link_output
+  > = {}
+): UseMutationOutput<
+  xnode.container.file.write_link_input,
+  xnode.container.file.write_link_output
+> {
+  const queryClient = useQueryClient();
+  return useMutation(
+    {
+      mutationFn: xnode.container.file.write_link,
+      onSuccess: (
+        _data,
+        { client, path: { container }, data: { destination } }
+      ) => {
+        Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: [
+              client.baseUrl,
+              "container",
+              container,
+              "file",
+              destination,
+            ],
+          }),
+        ]);
+      },
+    },
+    input?.overrides
   );
 }
 
@@ -405,15 +426,11 @@ export function useContainerFileSetPermissions(
   xnode.container.file.set_permissions_input,
   xnode.container.file.set_permissions_output
 > {
+  const queryClient = useQueryClient();
   return useMutation(
     {
       mutationFn: xnode.container.file.set_permissions,
-      onSuccess: (
-        _data,
-        { client, path: { container }, query: { path } },
-        _onMutateResult,
-        { client: queryClient }
-      ) => {
+      onSuccess: (_data, { client, path: { container }, query: { path } }) => {
         Promise.all([
           queryClient.invalidateQueries({
             queryKey: [

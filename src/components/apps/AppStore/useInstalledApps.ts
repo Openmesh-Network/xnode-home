@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useXNodeClient } from "../../../providers";
 import {
+  useContainerCreate,
   useContainerConfigSet,
   useContainerConfigBuild,
   useContainerConfigApply,
@@ -45,6 +46,7 @@ function textEncoder(value: string): Uint8Array {
 export function useInstalledApps() {
   const client = useXNodeClient();
   const listQuery = useHostListContainer({ client });
+  const createMutation = useContainerCreate();
   const setMutation = useContainerConfigSet();
   const buildMutation = useContainerConfigBuild();
   const applyMutation = useContainerConfigApply();
@@ -55,6 +57,10 @@ export function useInstalledApps() {
   const installApp = useCallback(
     async (appId: string) => {
       const config = getAppConfig(appId);
+      await createMutation.mutateAsync({
+        client,
+        path: { container: appId },
+      });
       await setMutation.mutateAsync({
         client,
         path: { container: appId },

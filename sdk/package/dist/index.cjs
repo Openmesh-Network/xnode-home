@@ -137,11 +137,14 @@ async function reload$1(input) {
     return RawPost(input, (path) => `${scope$c()}/${encodeURIComponent(path.process)}/reload`);
 }
 
-async function awaitCommand({ client, command, pollInterval, }) {
+async function awaitCommand({ client, command, getStatus, pollInterval, }) {
     let _status;
     while (!_status || _status.running) {
         await new Promise((resolve) => setTimeout(resolve, pollInterval ?? 1000));
-        _status = await status$1({ client, path: { process: command.id } }).catch(() => undefined);
+        _status = await (getStatus ?? status$1)({
+            client,
+            path: { process: command.id },
+        }).catch(() => undefined);
     }
 }
 

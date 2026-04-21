@@ -61,6 +61,7 @@ export function useInstalledApps() {
         client,
         path: { container: appId },
       });
+      await new Promise((resolve) => setTimeout(resolve, 20_000)); // wait 20 seconds for container to gain connectivity
       await setMutation.mutateAsync({
         client,
         path: { container: appId },
@@ -71,13 +72,30 @@ export function useInstalledApps() {
         path: { container: appId },
         data: { after: null },
       });
+      await xnode.common.utils.helpers.awaitCommand({
+        client,
+        command: build,
+        getStatus: (input) =>
+          xnode.container.process.status({
+            ...input,
+            path: { ...input.path, container: appId },
+          }),
+      }); // can remove once the result symlink move is done inside of the command
       const apply = await applyMutation.mutateAsync({
         client,
         path: { container: appId },
-        query: { when: "NextBoot" },
-        data: { after: { Command: { id: build.id, condition: "Success" } } },
+        query: { when: "Now" },
+        data: { after: { Command: { id: build.id, condition: "Always" } } }, // replace with "Success" once above comment is resolved
       });
-      await xnode.common.utils.helpers.awaitCommand({ client, command: apply });
+      await xnode.common.utils.helpers.awaitCommand({
+        client,
+        command: apply,
+        getStatus: (input) =>
+          xnode.container.process.status({
+            ...input,
+            path: { ...input.path, container: appId },
+          }),
+      });
     },
     [client, setMutation, buildMutation],
   );

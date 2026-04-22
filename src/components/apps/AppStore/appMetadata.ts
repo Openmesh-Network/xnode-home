@@ -5,6 +5,23 @@ export interface AppInfo {
   description: string;
   category: string;
   version: string;
+  author?: string;
+  custom?: boolean;
+}
+
+const _customApps: AppInfo[] = [];
+
+export const customApps = _customApps;
+
+export function addCustomApp(app: AppInfo) {
+  _customApps.push(app);
+}
+
+export function removeCustomApp(appId: string) {
+  const index = _customApps.findIndex(a => a.id === appId);
+  if (index !== -1) {
+    _customApps.splice(index, 1);
+  }
 }
 
 export const availableApps: AppInfo[] = [

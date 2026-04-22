@@ -9,10 +9,14 @@ import {
 } from "../../../../sdk/react/src/container";
 import { useHostListContainer } from "../../../../sdk/react/src/host/list";
 import { xnode } from "@openmesh-network/xnode-manager-sdk";
+import { useToast, type ToastStep, type ToastType } from "../../ui/Toast";
 
-const FLAKE_TEMPLATE = `{
+export type { ToastStep, ToastType } from "../../ui/Toast";
+
+function getFlakeTemplate(appId: string, userConfig: string): string {
+  return `{
   inputs = {
-    app.url = "github:Openmesh-Network/xnode-apps?dir={{APP_ID}}";
+    app.url = "github:Openmesh-Network/xnode-apps?dir=${appId}";
     nixpkgs.follows = "app/nixpkgs";
   };
 
@@ -21,12 +25,11 @@ const FLAKE_TEMPLATE = `{
       modules = [
         inputs.app.nixosModules.default
         (
-          { pkgs, ... }@args:
-          {
+          { pkgs, ... }@args: {
             xnode.xnode-config = ./xnode-config;
 
             # START USER CONFIG
-
+${userConfig ? userConfig.split('\n').map(line => '            ' + line).join('\n') : ''}
             # END USER CONFIG
           }
         )
@@ -34,13 +37,30 @@ const FLAKE_TEMPLATE = `{
     };
   };
 }`;
-
-function getAppConfig(appId: string): string {
-  return FLAKE_TEMPLATE.replace("{{APP_ID}}", appId);
 }
 
 function textEncoder(value: string): Uint8Array {
   return new TextEncoder().encode(value);
+}
+
+async function fetchUserConfig(appId: string): Promise<string | null> {
+  try {
+    const url = `https://raw.githubusercontent.com/Openmesh-Network/xnode-apps/refs/heads/main/${appId}/user-config`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.warn(`No user-config found for ${appId}`);
+      return null;
+    }
+    const text = await response.text();
+    return text.trim() || null;
+  } catch (error) {
+    console.warn(`Failed to fetch user-config for ${appId}:`, error);
+    return null;
+  }
+}
+
+interface InstallOptions {
+  flakeTemplate?: string;
 }
 
 export function useInstalledApps() {
@@ -51,63 +71,209 @@ export function useInstalledApps() {
   const buildMutation = useContainerConfigBuild();
   const applyMutation = useContainerConfigApply();
   const removeMutation = useContainerRemove();
+  const toastCtx = useToast();
 
   const installedAppIds = listQuery.data ?? [];
 
+  const cancelInstall = useCallback(async (appId: string) => {
+    await removeMutation.mutateAsync({
+      client,
+      path: { container: appId },
+    });
+  }, [client, removeMutation]);
+
   const installApp = useCallback(
-    async (appId: string) => {
-      const config = getAppConfig(appId);
-      await createMutation.mutateAsync({
-        client,
-        path: { container: appId },
+    async (appId: string, appName: string, options: InstallOptions = {}) => {
+      const type: ToastType = "installing";
+      const toastId = toastCtx.addToast({
+        type,
+        appName,
+        appId,
+        currentStep: "create",
       });
-      await new Promise((resolve) => setTimeout(resolve, 20_000)); // wait 20 seconds for container to gain connectivity
-      await setMutation.mutateAsync({
-        client,
-        path: { container: appId },
-        data: textEncoder(config) as any,
-      });
-      const build = await buildMutation.mutateAsync({
-        client,
-        path: { container: appId },
-        data: { after: null },
-      });
-      await xnode.common.utils.helpers.awaitCommand({
-        client,
-        command: build,
-        getStatus: (input) =>
-          xnode.container.process.status({
-            ...input,
-            path: { ...input.path, container: appId },
-          }),
-      }); // can remove once the result symlink move is done inside of the command
-      const apply = await applyMutation.mutateAsync({
-        client,
-        path: { container: appId },
-        query: { when: "Now" },
-        data: { after: { Command: { id: build.id, condition: "Always" } } }, // replace with "Success" once above comment is resolved
-      });
-      await xnode.common.utils.helpers.awaitCommand({
-        client,
-        command: apply,
-        getStatus: (input) =>
-          xnode.container.process.status({
-            ...input,
-            path: { ...input.path, container: appId },
-          }),
-      });
+
+      try {
+        // Step 1: Create
+        toastCtx.updateToast(toastId, { currentStep: "create" });
+        await createMutation.mutateAsync({
+          client,
+          path: { container: appId },
+        });
+
+        // Step 2: Wait for connectivity
+        toastCtx.updateToast(toastId, { currentStep: "waiting" });
+        await new Promise((resolve) => setTimeout(resolve, 10_000));
+
+        // Step 3: Fetch user config and set flake
+        toastCtx.updateToast(toastId, { currentStep: "build" });
+        
+        const userConfig = await fetchUserConfig(appId) ?? "";
+        const config = getFlakeTemplate(appId, userConfig);
+        
+        await setMutation.mutateAsync({
+          client,
+          path: { container: appId },
+          data: textEncoder(config) as any,
+        });
+
+        // Step 4: Build
+        const build = await buildMutation.mutateAsync({
+          client,
+          path: { container: appId },
+          data: { after: null },
+        });
+        
+        toastCtx.updateToast(toastId, { commandId: build.id });
+        
+        await xnode.common.utils.helpers.awaitCommand({
+          client,
+          command: build,
+          getStatus: (input) =>
+            xnode.container.process.status({
+              ...input,
+              path: { ...input.path, container: appId },
+            }),
+        });
+
+        // Step 5: Apply
+        toastCtx.updateToast(toastId, { currentStep: "apply" });
+        const apply = await applyMutation.mutateAsync({
+          client,
+          path: { container: appId },
+          query: { when: "Now" },
+          data: { after: { Command: { id: build.id, condition: "Always" } } },
+        });
+        
+        toastCtx.updateToast(toastId, { commandId: apply.id });
+        
+        await xnode.common.utils.helpers.awaitCommand({
+          client,
+          command: apply,
+          getStatus: (input) =>
+            xnode.container.process.status({
+              ...input,
+              path: { ...input.path, container: appId },
+            }),
+        });
+
+        // Complete
+        toastCtx.updateToast(toastId, { currentStep: "complete" });
+        
+        setTimeout(() => toastCtx.removeToast(toastId), 5000);
+      } catch (error) {
+        toastCtx.updateToast(toastId, { currentStep: "failed" });
+        
+        try {
+          await removeMutation.mutateAsync({
+            client,
+            path: { container: appId },
+          });
+        } catch {}
+        
+        setTimeout(() => toastCtx.removeToast(toastId), 5000);
+        throw error;
+      }
     },
-    [client, setMutation, buildMutation],
+    [client, createMutation, setMutation, buildMutation, applyMutation, removeMutation, toastCtx]
+  );
+
+  const updateApp = useCallback(
+    async (appId: string, appName: string, flakeTemplate?: string) => {
+      const toastId = toastCtx.addToast({
+        type: "updating",
+        appName,
+        appId,
+        currentStep: "create",
+      });
+
+      try {
+        toastCtx.updateToast(toastId, { currentStep: "build" });
+        
+        const userConfig = await fetchUserConfig(appId) ?? "";
+        
+        const config = typeof flakeTemplate === "string" 
+          ? getFlakeTemplate(appId, userConfig).replace(/# START USER CONFIG[\s\S]*# END USER CONFIG/, `# START USER CONFIG\n${flakeTemplate.split('\n').map(line => '            ' + line).join('\n')}\n            # END USER CONFIG`) 
+          : getFlakeTemplate(appId, userConfig);
+        
+        await setMutation.mutateAsync({
+          client,
+          path: { container: appId },
+          data: textEncoder(config) as any,
+        });
+
+        const build = await buildMutation.mutateAsync({
+          client,
+          path: { container: appId },
+          data: { after: null },
+        });
+        
+        toastCtx.updateToast(toastId, { commandId: build.id });
+        
+        await xnode.common.utils.helpers.awaitCommand({
+          client,
+          command: build,
+          getStatus: (input) =>
+            xnode.container.process.status({
+              ...input,
+              path: { ...input.path, container: appId },
+            }),
+        });
+
+        toastCtx.updateToast(toastId, { currentStep: "apply" });
+        const apply = await applyMutation.mutateAsync({
+          client,
+          path: { container: appId },
+          query: { when: "Now" },
+          data: { after: { Command: { id: build.id, condition: "Always" } } },
+        });
+        
+        toastCtx.updateToast(toastId, { commandId: apply.id });
+        
+        await xnode.common.utils.helpers.awaitCommand({
+          client,
+          command: apply,
+          getStatus: (input) =>
+            xnode.container.process.status({
+              ...input,
+              path: { ...input.path, container: appId },
+            }),
+        });
+
+        toastCtx.updateToast(toastId, { currentStep: "complete" });
+        setTimeout(() => toastCtx.removeToast(toastId), 5000);
+      } catch (error) {
+        toastCtx.updateToast(toastId, { currentStep: "failed" });
+        setTimeout(() => toastCtx.removeToast(toastId), 5000);
+        throw error;
+      }
+    },
+    [client, setMutation, buildMutation, applyMutation, toastCtx]
   );
 
   const uninstallApp = useCallback(
-    async (appId: string) => {
-      await removeMutation.mutateAsync({
-        client,
-        path: { container: appId },
+    async (appId: string, appName: string) => {
+      const toastId = toastCtx.addToast({
+        type: "uninstalling",
+        appName,
+        appId,
+        currentStep: "create",
       });
+
+      try {
+        await removeMutation.mutateAsync({
+          client,
+          path: { container: appId },
+        });
+
+        toastCtx.updateToast(toastId, { currentStep: "complete" });
+        setTimeout(() => toastCtx.removeToast(toastId), 5000);
+      } catch (error) {
+        toastCtx.updateToast(toastId, { currentStep: "failed" });
+        setTimeout(() => toastCtx.removeToast(toastId), 5000);
+        throw error;
+      }
     },
-    [client, removeMutation],
+    [client, removeMutation, toastCtx]
   );
 
   return {
@@ -115,7 +281,9 @@ export function useInstalledApps() {
     isLoading: listQuery.isLoading,
     error: listQuery.error,
     installApp,
+    updateApp,
     uninstallApp,
+    cancelInstall,
     isInstalling: setMutation.isPending || buildMutation.isPending,
     isRemoving: removeMutation.isPending,
     isApplying: applyMutation.isPending,

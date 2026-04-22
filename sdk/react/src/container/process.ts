@@ -11,19 +11,21 @@ import { xnode } from "@openmesh-network/xnode-manager-sdk";
 
 export function useContainerProcessLogs({
   client,
+  container,
   process,
   level,
   max,
   overrides,
 }: UseQueryInput<
-  xnode.host.process.logs_input,
-  xnode.host.process.logs_output
->): UseQueryOutput<xnode.host.process.logs_output> {
+  xnode.container.process.logs_input,
+  xnode.container.process.logs_output
+>): UseQueryOutput<xnode.container.process.logs_output> {
   return useQuery(
     {
       queryKey: [
         client?.baseUrl ?? "",
-        "host",
+        "container",
+        container ?? "",
         "process",
         process ?? "",
         "logs",
@@ -31,15 +33,15 @@ export function useContainerProcessLogs({
         max ?? 0,
       ],
 
-      enabled: !!client && !!process,
+      enabled: !!client && !!container && !!process,
       refetchInterval: 1000,
 
       queryFn: async ({ client: queryClient }) => {
-        if (!client || !process) return [];
+        if (!client || !container || !process) return [];
 
         const previous =
-          queryClient.getQueryData<xnode.host.process.logs_output>([
-            "host",
+          queryClient.getQueryData<xnode.container.process.logs_output>([
+            "container",
             "process",
             "logs",
             client.baseUrl,
@@ -59,9 +61,9 @@ export function useContainerProcessLogs({
             ? previous.findIndex((log) => log.timestamp === lastTimestamp)
             : 0;
 
-        const next = await xnode.host.process.logs({
+        const next = await xnode.container.process.logs({
           client,
-          path: { process },
+          path: { container, process },
           query: {
             after: lastTimestamp ?? null,
             level: level ?? null,
@@ -80,31 +82,33 @@ export function useContainerProcessLogs({
 
 export function useContainerProcessStatus({
   client,
+  container,
   process,
   overrides,
 }: UseQueryInput<
-  xnode.host.process.status_input,
-  xnode.host.process.status_output
->): UseQueryOutput<xnode.host.process.status_output> {
+  xnode.container.process.status_input,
+  xnode.container.process.status_output
+>): UseQueryOutput<xnode.container.process.status_output> {
   return useQuery(
     {
       queryKey: [
         client?.baseUrl ?? "",
-        "host",
+        "container",
+        container ?? "",
         "process",
         process ?? "",
         "status",
       ],
-      enabled: !!client && !!process,
+      enabled: !!client && !!container && !!process,
       refetchInterval: 1_000, // 1 second
       queryFn: async () => {
-        if (!client || !process) {
+        if (!client || !container || !process) {
           return undefined;
         }
 
-        return await xnode.host.process.status({
+        return await xnode.container.process.status({
           client,
-          path: { process },
+          path: { container, process },
         });
       },
     },
@@ -114,31 +118,33 @@ export function useContainerProcessStatus({
 
 export function useContainerProcessUsage({
   client,
+  container,
   process,
   overrides,
 }: UseQueryInput<
-  xnode.host.process.usage_input,
-  xnode.host.process.usage_output
->): UseQueryOutput<xnode.host.process.usage_output> {
+  xnode.container.process.usage_input,
+  xnode.container.process.usage_output
+>): UseQueryOutput<xnode.container.process.usage_output> {
   return useQuery(
     {
       queryKey: [
         client?.baseUrl ?? "",
-        "host",
+        "container",
+        container ?? "",
         "process",
         process ?? "",
         "usage",
       ],
-      enabled: !!client && !!process,
+      enabled: !!client && !!container && !!process,
       refetchInterval: 1_000, // 1 second
       queryFn: async () => {
-        if (!client || !process) {
+        if (!client || !container || !process) {
           return undefined;
         }
 
-        return await xnode.host.process.usage({
+        return await xnode.container.process.usage({
           client,
-          path: { process },
+          path: { container, process },
         });
       },
     },
@@ -148,21 +154,27 @@ export function useContainerProcessUsage({
 
 export function useContainerProcessStart(
   input: UseMutationInput<
-    xnode.host.process.start_input,
-    xnode.host.process.start_output
+    xnode.container.process.start_input,
+    xnode.container.process.start_output
   > = {}
 ): UseMutationOutput<
-  xnode.host.process.start_input,
-  xnode.host.process.start_output
+  xnode.container.process.start_input,
+  xnode.container.process.start_output
 > {
   const queryClient = useQueryClient();
   return useMutation(
     {
-      mutationFn: xnode.host.process.start,
-      onSuccess: (_data, { client, path: { process } }) => {
+      mutationFn: xnode.container.process.start,
+      onSuccess: (_data, { client, path: { container, process } }) => {
         Promise.all([
           queryClient.invalidateQueries({
-            queryKey: [client.baseUrl, "host", "process", process],
+            queryKey: [
+              client.baseUrl,
+              "container",
+              container,
+              "process",
+              process,
+            ],
           }),
         ]);
       },
@@ -173,21 +185,27 @@ export function useContainerProcessStart(
 
 export function useContainerProcessStop(
   input: UseMutationInput<
-    xnode.host.process.stop_input,
-    xnode.host.process.stop_output
+    xnode.container.process.stop_input,
+    xnode.container.process.stop_output
   > = {}
 ): UseMutationOutput<
-  xnode.host.process.stop_input,
-  xnode.host.process.stop_output
+  xnode.container.process.stop_input,
+  xnode.container.process.stop_output
 > {
   const queryClient = useQueryClient();
   return useMutation(
     {
-      mutationFn: xnode.host.process.stop,
-      onSuccess: (_data, { client, path: { process } }) => {
+      mutationFn: xnode.container.process.stop,
+      onSuccess: (_data, { client, path: { container, process } }) => {
         Promise.all([
           queryClient.invalidateQueries({
-            queryKey: [client.baseUrl, "host", "process", process],
+            queryKey: [
+              client.baseUrl,
+              "container",
+              container,
+              "process",
+              process,
+            ],
           }),
         ]);
       },
@@ -198,21 +216,27 @@ export function useContainerProcessStop(
 
 export function useContainerProcessRestart(
   input: UseMutationInput<
-    xnode.host.process.restart_input,
-    xnode.host.process.restart_output
+    xnode.container.process.restart_input,
+    xnode.container.process.restart_output
   > = {}
 ): UseMutationOutput<
-  xnode.host.process.restart_input,
-  xnode.host.process.restart_output
+  xnode.container.process.restart_input,
+  xnode.container.process.restart_output
 > {
   const queryClient = useQueryClient();
   return useMutation(
     {
-      mutationFn: xnode.host.process.restart,
-      onSuccess: (_data, { client, path: { process } }) => {
+      mutationFn: xnode.container.process.restart,
+      onSuccess: (_data, { client, path: { container, process } }) => {
         Promise.all([
           queryClient.invalidateQueries({
-            queryKey: [client.baseUrl, "host", "process", process],
+            queryKey: [
+              client.baseUrl,
+              "container",
+              container,
+              "process",
+              process,
+            ],
           }),
         ]);
       },
@@ -223,21 +247,27 @@ export function useContainerProcessRestart(
 
 export function useContainerProcessReload(
   input: UseMutationInput<
-    xnode.host.process.reload_input,
-    xnode.host.process.reload_output
+    xnode.container.process.reload_input,
+    xnode.container.process.reload_output
   > = {}
 ): UseMutationOutput<
-  xnode.host.process.reload_input,
-  xnode.host.process.reload_output
+  xnode.container.process.reload_input,
+  xnode.container.process.reload_output
 > {
   const queryClient = useQueryClient();
   return useMutation(
     {
-      mutationFn: xnode.host.process.reload,
-      onSuccess: (_data, { client, path: { process } }) => {
+      mutationFn: xnode.container.process.reload,
+      onSuccess: (_data, { client, path: { container, process } }) => {
         Promise.all([
           queryClient.invalidateQueries({
-            queryKey: [client.baseUrl, "host", "process", process],
+            queryKey: [
+              client.baseUrl,
+              "container",
+              container,
+              "process",
+              process,
+            ],
           }),
         ]);
       },

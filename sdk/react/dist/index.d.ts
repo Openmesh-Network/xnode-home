@@ -57,18 +57,18 @@ declare function useContainerWriteLink(input?: UseMutationInput<xnode.container.
 declare function useContainerFileGetPermissions({ client, container, path, overrides, }: UseQueryInput<xnode.container.file.get_permissions_input, xnode.container.file.get_permissions_output>): UseQueryOutput<xnode.container.file.get_permissions_output>;
 declare function useContainerFileSetPermissions(input?: UseMutationInput<xnode.container.file.set_permissions_input, xnode.container.file.set_permissions_output>): UseMutationOutput<xnode.container.file.set_permissions_input, xnode.container.file.set_permissions_output>;
 
-declare function useContainerInfoUsersUsers({ client, overrides, }: UseQueryInput<xnode.host.info.users.users_input, xnode.host.info.users.users_output>): UseQueryOutput<xnode.host.info.users.users_output>;
-declare function useContainerInfoUsersGroups({ client, overrides, }: UseQueryInput<xnode.host.info.users.groups_input, xnode.host.info.users.groups_output>): UseQueryOutput<xnode.host.info.users.groups_output>;
+declare function useContainerInfoUsersUsers({ client, container, overrides, }: UseQueryInput<xnode.container.info.users.users_input, xnode.container.info.users.users_output>): UseQueryOutput<xnode.container.info.users.users_output>;
+declare function useContainerInfoUsersGroups({ client, container, overrides, }: UseQueryInput<xnode.container.info.users.groups_input, xnode.container.info.users.groups_output>): UseQueryOutput<xnode.container.info.users.groups_output>;
 
-declare function useContainerListProcess({ client, overrides, }: UseQueryInput<xnode.host.list.process_input, xnode.host.list.process_output>): UseQueryOutput<xnode.host.list.process_output>;
+declare function useContainerListProcess({ client, container, overrides, }: UseQueryInput<xnode.container.list.process_input, xnode.container.list.process_output>): UseQueryOutput<xnode.container.list.process_output>;
 
-declare function useContainerProcessLogs({ client, process, level, max, overrides, }: UseQueryInput<xnode.host.process.logs_input, xnode.host.process.logs_output>): UseQueryOutput<xnode.host.process.logs_output>;
-declare function useContainerProcessStatus({ client, process, overrides, }: UseQueryInput<xnode.host.process.status_input, xnode.host.process.status_output>): UseQueryOutput<xnode.host.process.status_output>;
-declare function useContainerProcessUsage({ client, process, overrides, }: UseQueryInput<xnode.host.process.usage_input, xnode.host.process.usage_output>): UseQueryOutput<xnode.host.process.usage_output>;
-declare function useContainerProcessStart(input?: UseMutationInput<xnode.host.process.start_input, xnode.host.process.start_output>): UseMutationOutput<xnode.host.process.start_input, xnode.host.process.start_output>;
-declare function useContainerProcessStop(input?: UseMutationInput<xnode.host.process.stop_input, xnode.host.process.stop_output>): UseMutationOutput<xnode.host.process.stop_input, xnode.host.process.stop_output>;
-declare function useContainerProcessRestart(input?: UseMutationInput<xnode.host.process.restart_input, xnode.host.process.restart_output>): UseMutationOutput<xnode.host.process.restart_input, xnode.host.process.restart_output>;
-declare function useContainerProcessReload(input?: UseMutationInput<xnode.host.process.reload_input, xnode.host.process.reload_output>): UseMutationOutput<xnode.host.process.reload_input, xnode.host.process.reload_output>;
+declare function useContainerProcessLogs({ client, container, process, level, max, overrides, }: UseQueryInput<xnode.container.process.logs_input, xnode.container.process.logs_output>): UseQueryOutput<xnode.container.process.logs_output>;
+declare function useContainerProcessStatus({ client, container, process, overrides, }: UseQueryInput<xnode.container.process.status_input, xnode.container.process.status_output>): UseQueryOutput<xnode.container.process.status_output>;
+declare function useContainerProcessUsage({ client, container, process, overrides, }: UseQueryInput<xnode.container.process.usage_input, xnode.container.process.usage_output>): UseQueryOutput<xnode.container.process.usage_output>;
+declare function useContainerProcessStart(input?: UseMutationInput<xnode.container.process.start_input, xnode.container.process.start_output>): UseMutationOutput<xnode.container.process.start_input, xnode.container.process.start_output>;
+declare function useContainerProcessStop(input?: UseMutationInput<xnode.container.process.stop_input, xnode.container.process.stop_output>): UseMutationOutput<xnode.container.process.stop_input, xnode.container.process.stop_output>;
+declare function useContainerProcessRestart(input?: UseMutationInput<xnode.container.process.restart_input, xnode.container.process.restart_output>): UseMutationOutput<xnode.container.process.restart_input, xnode.container.process.restart_output>;
+declare function useContainerProcessReload(input?: UseMutationInput<xnode.container.process.reload_input, xnode.container.process.reload_output>): UseMutationOutput<xnode.container.process.reload_input, xnode.container.process.reload_output>;
 
 declare function useContainerCreate(input?: UseMutationInput<xnode.container.create_input, xnode.container.create_output>): UseMutationOutput<xnode.container.create_input, xnode.container.create_output>;
 declare function useContainerRemove(input?: UseMutationInput<xnode.container.remove_input, xnode.container.remove_output>): UseMutationOutput<xnode.container.remove_input, xnode.container.remove_output>;

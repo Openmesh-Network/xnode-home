@@ -3,23 +3,32 @@ import { xnode } from "@openmesh-network/xnode-manager-sdk";
 
 export function useContainerInfoUsersUsers({
   client,
+  container,
   overrides,
 }: UseQueryInput<
-  xnode.host.info.users.users_input,
-  xnode.host.info.users.users_output
->): UseQueryOutput<xnode.host.info.users.users_output> {
+  xnode.container.info.users.users_input,
+  xnode.container.info.users.users_output
+>): UseQueryOutput<xnode.container.info.users.users_output> {
   return useQuery(
     {
-      queryKey: [client?.baseUrl ?? "", "host", "info", "users", "users"],
-      enabled: !!client,
+      queryKey: [
+        client?.baseUrl ?? "",
+        "container",
+        container ?? "",
+        "info",
+        "users",
+        "users",
+      ],
+      enabled: !!client && !!container,
       refetchInterval: 60_000, // 1 minute
       queryFn: async () => {
-        if (!client) {
+        if (!client || !container) {
           return undefined;
         }
 
-        return await xnode.host.info.users.users({
+        return await xnode.container.info.users.users({
           client,
+          path: { container },
         });
       },
     },
@@ -29,23 +38,32 @@ export function useContainerInfoUsersUsers({
 
 export function useContainerInfoUsersGroups({
   client,
+  container,
   overrides,
 }: UseQueryInput<
-  xnode.host.info.users.groups_input,
-  xnode.host.info.users.groups_output
->): UseQueryOutput<xnode.host.info.users.groups_output> {
+  xnode.container.info.users.groups_input,
+  xnode.container.info.users.groups_output
+>): UseQueryOutput<xnode.container.info.users.groups_output> {
   return useQuery(
     {
-      queryKey: [client?.baseUrl ?? "", "host", "info", "users", "groups"],
-      enabled: !!client,
+      queryKey: [
+        client?.baseUrl ?? "",
+        "container",
+        container ?? "",
+        "info",
+        "users",
+        "groups",
+      ],
+      enabled: !!client && !!container,
       refetchInterval: 60_000, // 1 minute
       queryFn: async () => {
-        if (!client) {
+        if (!client || !container) {
           return undefined;
         }
 
-        return await xnode.host.info.users.groups({
+        return await xnode.container.info.users.groups({
           client,
+          path: { container },
         });
       },
     },

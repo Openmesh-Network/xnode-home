@@ -3,23 +3,31 @@ import { xnode } from "@openmesh-network/xnode-manager-sdk";
 
 export function useContainerListProcess({
   client,
+  container,
   overrides,
 }: UseQueryInput<
-  xnode.host.list.process_input,
-  xnode.host.list.process_output
->): UseQueryOutput<xnode.host.list.process_output> {
+  xnode.container.list.process_input,
+  xnode.container.list.process_output
+>): UseQueryOutput<xnode.container.list.process_output> {
   return useQuery(
     {
-      queryKey: [client?.baseUrl ?? "", "host", "list", "process"],
-      enabled: !!client,
+      queryKey: [
+        client?.baseUrl ?? "",
+        "container",
+        container ?? "",
+        "list",
+        "process",
+      ],
+      enabled: !!client && !!container,
       refetchInterval: 10_000, // 10 seconds
       queryFn: async () => {
-        if (!client) {
+        if (!client || !container) {
           return undefined;
         }
 
-        return await xnode.host.list.process({
+        return await xnode.container.list.process({
           client,
+          path: { container },
         });
       },
     },

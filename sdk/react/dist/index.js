@@ -380,71 +380,95 @@ function useContainerFileSetPermissions(input = {}) {
     }, input?.overrides);
 }
 
-function useContainerInfoUsersUsers({ client, overrides, }) {
-    return useQuery({
-        queryKey: [client?.baseUrl ?? "", "host", "info", "users", "users"],
-        enabled: !!client,
-        refetchInterval: 60_000, // 1 minute
-        queryFn: async () => {
-            if (!client) {
-                return undefined;
-            }
-            return await xnode.host.info.users.users({
-                client,
-            });
-        },
-    }, overrides);
-}
-function useContainerInfoUsersGroups({ client, overrides, }) {
-    return useQuery({
-        queryKey: [client?.baseUrl ?? "", "host", "info", "users", "groups"],
-        enabled: !!client,
-        refetchInterval: 60_000, // 1 minute
-        queryFn: async () => {
-            if (!client) {
-                return undefined;
-            }
-            return await xnode.host.info.users.groups({
-                client,
-            });
-        },
-    }, overrides);
-}
-
-function useContainerListProcess({ client, overrides, }) {
-    return useQuery({
-        queryKey: [client?.baseUrl ?? "", "host", "list", "process"],
-        enabled: !!client,
-        refetchInterval: 10_000, // 10 seconds
-        queryFn: async () => {
-            if (!client) {
-                return undefined;
-            }
-            return await xnode.host.list.process({
-                client,
-            });
-        },
-    }, overrides);
-}
-
-function useContainerProcessLogs({ client, process, level, max, overrides, }) {
+function useContainerInfoUsersUsers({ client, container, overrides, }) {
     return useQuery({
         queryKey: [
             client?.baseUrl ?? "",
-            "host",
+            "container",
+            container ?? "",
+            "info",
+            "users",
+            "users",
+        ],
+        enabled: !!client && !!container,
+        refetchInterval: 60_000, // 1 minute
+        queryFn: async () => {
+            if (!client || !container) {
+                return undefined;
+            }
+            return await xnode.container.info.users.users({
+                client,
+                path: { container },
+            });
+        },
+    }, overrides);
+}
+function useContainerInfoUsersGroups({ client, container, overrides, }) {
+    return useQuery({
+        queryKey: [
+            client?.baseUrl ?? "",
+            "container",
+            container ?? "",
+            "info",
+            "users",
+            "groups",
+        ],
+        enabled: !!client && !!container,
+        refetchInterval: 60_000, // 1 minute
+        queryFn: async () => {
+            if (!client || !container) {
+                return undefined;
+            }
+            return await xnode.container.info.users.groups({
+                client,
+                path: { container },
+            });
+        },
+    }, overrides);
+}
+
+function useContainerListProcess({ client, container, overrides, }) {
+    return useQuery({
+        queryKey: [
+            client?.baseUrl ?? "",
+            "container",
+            container ?? "",
+            "list",
+            "process",
+        ],
+        enabled: !!client && !!container,
+        refetchInterval: 10_000, // 10 seconds
+        queryFn: async () => {
+            if (!client || !container) {
+                return undefined;
+            }
+            return await xnode.container.list.process({
+                client,
+                path: { container },
+            });
+        },
+    }, overrides);
+}
+
+function useContainerProcessLogs({ client, container, process, level, max, overrides, }) {
+    return useQuery({
+        queryKey: [
+            client?.baseUrl ?? "",
+            "container",
+            container ?? "",
             "process",
             process ?? "",
             "logs",
             level ?? "",
             max ?? 0,
         ],
-        enabled: !!client && !!process,
+        enabled: !!client && !!container && !!process,
         refetchInterval: 1000,
         queryFn: async ({ client: queryClient }) => {
-            if (!client || !process)
+            if (!client || !container || !process)
                 return [];
             const previous = queryClient.getQueryData([
-                "host",
+                "container",
                 "process",
                 "logs",
                 client.baseUrl,
@@ -460,9 +484,9 @@ function useContainerProcessLogs({ client, process, level, max, overrides, }) {
             const firstLogOfTimestamp = lastTimestamp !== undefined
                 ? previous.findIndex((log) => log.timestamp === lastTimestamp)
                 : 0;
-            const next = await xnode.host.process.logs({
+            const next = await xnode.container.process.logs({
                 client,
-                path: { process },
+                path: { container, process },
                 query: {
                     after: lastTimestamp ?? null,
                     level: level ?? null,
@@ -473,46 +497,48 @@ function useContainerProcessLogs({ client, process, level, max, overrides, }) {
         },
     }, overrides);
 }
-function useContainerProcessStatus({ client, process, overrides, }) {
+function useContainerProcessStatus({ client, container, process, overrides, }) {
     return useQuery({
         queryKey: [
             client?.baseUrl ?? "",
-            "host",
+            "container",
+            container ?? "",
             "process",
             process ?? "",
             "status",
         ],
-        enabled: !!client && !!process,
+        enabled: !!client && !!container && !!process,
         refetchInterval: 1_000, // 1 second
         queryFn: async () => {
-            if (!client || !process) {
+            if (!client || !container || !process) {
                 return undefined;
             }
-            return await xnode.host.process.status({
+            return await xnode.container.process.status({
                 client,
-                path: { process },
+                path: { container, process },
             });
         },
     }, overrides);
 }
-function useContainerProcessUsage({ client, process, overrides, }) {
+function useContainerProcessUsage({ client, container, process, overrides, }) {
     return useQuery({
         queryKey: [
             client?.baseUrl ?? "",
-            "host",
+            "container",
+            container ?? "",
             "process",
             process ?? "",
             "usage",
         ],
-        enabled: !!client && !!process,
+        enabled: !!client && !!container && !!process,
         refetchInterval: 1_000, // 1 second
         queryFn: async () => {
-            if (!client || !process) {
+            if (!client || !container || !process) {
                 return undefined;
             }
-            return await xnode.host.process.usage({
+            return await xnode.container.process.usage({
                 client,
-                path: { process },
+                path: { container, process },
             });
         },
     }, overrides);
@@ -520,11 +546,17 @@ function useContainerProcessUsage({ client, process, overrides, }) {
 function useContainerProcessStart(input = {}) {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: xnode.host.process.start,
-        onSuccess: (_data, { client, path: { process } }) => {
+        mutationFn: xnode.container.process.start,
+        onSuccess: (_data, { client, path: { container, process } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey: [client.baseUrl, "host", "process", process],
+                    queryKey: [
+                        client.baseUrl,
+                        "container",
+                        container,
+                        "process",
+                        process,
+                    ],
                 }),
             ]);
         },
@@ -533,11 +565,17 @@ function useContainerProcessStart(input = {}) {
 function useContainerProcessStop(input = {}) {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: xnode.host.process.stop,
-        onSuccess: (_data, { client, path: { process } }) => {
+        mutationFn: xnode.container.process.stop,
+        onSuccess: (_data, { client, path: { container, process } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey: [client.baseUrl, "host", "process", process],
+                    queryKey: [
+                        client.baseUrl,
+                        "container",
+                        container,
+                        "process",
+                        process,
+                    ],
                 }),
             ]);
         },
@@ -546,11 +584,17 @@ function useContainerProcessStop(input = {}) {
 function useContainerProcessRestart(input = {}) {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: xnode.host.process.restart,
-        onSuccess: (_data, { client, path: { process } }) => {
+        mutationFn: xnode.container.process.restart,
+        onSuccess: (_data, { client, path: { container, process } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey: [client.baseUrl, "host", "process", process],
+                    queryKey: [
+                        client.baseUrl,
+                        "container",
+                        container,
+                        "process",
+                        process,
+                    ],
                 }),
             ]);
         },
@@ -559,11 +603,17 @@ function useContainerProcessRestart(input = {}) {
 function useContainerProcessReload(input = {}) {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: xnode.host.process.reload,
-        onSuccess: (_data, { client, path: { process } }) => {
+        mutationFn: xnode.container.process.reload,
+        onSuccess: (_data, { client, path: { container, process } }) => {
             Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey: [client.baseUrl, "host", "process", process],
+                    queryKey: [
+                        client.baseUrl,
+                        "container",
+                        container,
+                        "process",
+                        process,
+                    ],
                 }),
             ]);
         },

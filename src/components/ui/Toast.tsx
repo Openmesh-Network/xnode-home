@@ -37,15 +37,12 @@ interface ToastContextValue {
   addToast: (toast: Omit<ToastData, "id" | "completedSteps">) => string;
   updateToast: (id: string, updates: Partial<ToastData>) => void;
   markStepComplete: (id: string) => void;
-  cancelInstall: (appId: string) => void;
-  isInstallCancelled: (appId: string) => boolean;
   removeToast: (id: string) => void;
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
 const TOAST_STORAGE_KEY = "xnode-pending-toasts";
-const CANCEL_STORAGE_KEY = "xnode-cancel-installs";
 const COMPLETED_STEPS: Record<ToastStep, ToastStep> = {
   create: "waiting",
   waiting: "build",
@@ -69,22 +66,6 @@ function loadToastsFromStorage(): ToastData[] {
     }
   } catch {}
   return [];
-}
-
-function loadCancellationsFromStorage(): Set<string> {
-  try {
-    const saved = localStorage.getItem(CANCEL_STORAGE_KEY);
-    if (saved) {
-      return new Set(JSON.parse(saved));
-    }
-  } catch {}
-  return new Set();
-}
-
-function saveCancellationsToStorage(cancels: Set<string>) {
-  try {
-    localStorage.setItem(CANCEL_STORAGE_KEY, JSON.stringify([...cancels]));
-  } catch {}
 }
 
 export function useToast() {
@@ -200,20 +181,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const [cancelledInstalls, setCancelledInstalls] = useState<Set<string>>(() => loadCancellationsFromStorage());
-
-  useEffect(() => {
-    saveCancellationsToStorage(cancelledInstalls);
-  }, [cancelledInstalls]);
-
-  const cancelInstall = useCallback((appId: string) => {
-    setCancelledInstalls((prev) => new Set([...prev, appId]));
-  }, []);
-
-  const isInstallCancelled = useCallback((appId: string) => {
-    return cancelledInstalls.has(appId);
-  }, [cancelledInstalls]);
-
   return (
     <ToastContext.Provider
       value={{
@@ -222,8 +189,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         addToast,
         updateToast,
         markStepComplete,
-        cancelInstall,
-        isInstallCancelled,
         removeToast,
       }}
     >
@@ -372,12 +337,10 @@ function ToastItem({
   onRemove: () => void;
 }) {
   const [showLogs, setShowLogs] = useState(false);
-  const { currentStep, appId } = toast;
-  const { cancelInstall, isInstallCancelled } = useToast();
+  const { currentStep } = toast;
   const isComplete = currentStep === "complete";
   const isFailed = currentStep === "failed";
   const isActionable = currentStep === "build" || currentStep === "apply";
-  const isCancelled = isInstallCancelled(appId);
 
   const typeLabel =
     toast.type === "installing"
@@ -387,11 +350,6 @@ function ToastItem({
         : toast.type === "uninstalling"
           ? "Uninstalling"
           : "Info";
-
-  const handleCancelClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    cancelInstall(appId);
-  };
 
   return (
     <>
@@ -447,15 +405,11 @@ function ToastItem({
             )}
           </div>
           <button
-            className={`p-1.5 rounded-md transition-colors ${
-              isActionable
-                ? "hover:bg-red-500/20 hover:text-red-400"
-                : "hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)] hover:text-white"
-            }`}
-            onClick={isActionable ? handleCancelClick : onRemove}
-            title={isActionable ? "Cancel installation" : "Dismiss"}
+            className="p-1.5 rounded-md transition-colors hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)] hover:text-white"
+            onClick={onRemove}
+            title="Dismiss"
           >
-            {isActionable ? "✕" : "✕"}
+            ✕
           </button>
         </div>
       </div>

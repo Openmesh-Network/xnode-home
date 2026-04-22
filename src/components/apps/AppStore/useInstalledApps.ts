@@ -75,13 +75,6 @@ export function useInstalledApps() {
 
   const installedAppIds = listQuery.data ?? [];
 
-  const cancelInstall = useCallback(async (appId: string) => {
-    await removeMutation.mutateAsync({
-      client,
-      path: { container: appId },
-    });
-  }, [client, removeMutation]);
-
   const installApp = useCallback(
     async (appId: string, appName: string, options: InstallOptions = {}) => {
       const type: ToastType = "installing";
@@ -283,7 +276,6 @@ export function useInstalledApps() {
     installApp,
     updateApp,
     uninstallApp,
-    cancelInstall,
     isInstalling: setMutation.isPending || buildMutation.isPending,
     isRemoving: removeMutation.isPending,
     isApplying: applyMutation.isPending,

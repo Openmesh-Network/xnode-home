@@ -12,7 +12,7 @@ import { useToast } from "../../ui/Toast";
 import { useXNodeClient } from "../../../providers";
 import { useContainerConfigGet } from "../../../../sdk/react/src/container";
 
-function InstallProgress({ onCancel }: { onCancel?: () => void }) {
+function InstallProgress() {
   return (
     <div className="flex items-center gap-2">
       <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
@@ -32,14 +32,6 @@ function InstallProgress({ onCancel }: { onCancel?: () => void }) {
         />
       </svg>
       <span>Installing...</span>
-      {onCancel && (
-        <button
-          onClick={onCancel}
-          className="ml-2 text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20 transition-colors"
-        >
-          Cancel
-        </button>
-      )}
     </div>
   );
 }
@@ -76,8 +68,8 @@ export function AppDetail({
   onBack: () => void;
 }) {
   const client = useXNodeClient();
-  const { installedAppIds, installApp, updateApp, uninstallApp, cancelInstall: cancelCurrentInstall, isInstalling, isRemoving } = useInstalledApps();
-  const { pendingInstalls, isInstallCancelled } = useToast();
+  const { installedAppIds, installApp, updateApp, uninstallApp, isInstalling, isRemoving } = useInstalledApps();
+  const { pendingInstalls } = useToast();
   const [processingAppId, setProcessingAppId] = useState<string | null>(null);
   const [showEdit, setShowEdit] = useState(false);
   const [isAppInstalling, setIsAppInstalling] = useState(false);
@@ -86,7 +78,6 @@ export function AppDetail({
 
   const isInstalled = installedAppIds.includes(app.id);
   const isPendingInstall = pendingInstalls.has(app.id);
-  const isCancelled = isInstallCancelled(app.id);
   const isProcessing =
     isInstalling || isRemoving || isAppInstalling || isAppRemoving;
 
@@ -105,10 +96,6 @@ export function AppDetail({
       setIsAppInstalling(false);
       setProcessingAppId(null);
     }
-  };
-
-  const handleCancel = () => {
-    cancelCurrentInstall(app.id);
   };
 
   const handleUninstall = async () => {
@@ -227,11 +214,11 @@ export function AppDetail({
             className="w-full sm:w-auto min-w-[140px]"
           >
             {isAppInstalling ? (
-              <InstallProgress onCancel={handleCancel} />
+              <InstallProgress />
             ) : isAppRemoving ? (
               <UninstallProgress />
             ) : isPendingInstall ? (
-              <InstallProgress onCancel={handleCancel} />
+              <InstallProgress />
             ) : isInstalled ? (
               "Uninstall"
             ) : (

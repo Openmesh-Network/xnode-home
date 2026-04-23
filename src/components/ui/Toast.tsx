@@ -405,7 +405,7 @@ function ToastItem({
             )}
           </div>
           <button
-            className="p-1.5 rounded-md transition-colors hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)] hover:text-white"
+            className="hidden p-1.5 rounded-md transition-colors hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)] hover:text-white"
             onClick={onRemove}
             title="Dismiss"
           >

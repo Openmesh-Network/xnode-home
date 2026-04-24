@@ -13,14 +13,17 @@ export interface AppInfo {
 const STORAGE_KEY = "xnode-custom-apps";
 
 function loadCustomApps(): AppInfo[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      console.log("[appMetadata] Found in localStorage:", parsed);
+      return parsed;
+    } catch (e) {
+      console.warn("Failed to parse custom apps from localStorage:", e);
     }
-  } catch (e) {
-    console.warn("Failed to load custom apps from localStorage:", e);
   }
+  console.log("[appMetadata] No custom apps in localStorage");
   return [];
 }
 
@@ -32,20 +35,35 @@ function saveCustomApps(apps: AppInfo[]) {
   }
 }
 
-const _customApps: AppInfo[] = loadCustomApps();
+let _customApps: AppInfo[] | undefined;
 
-export const customApps = _customApps;
+function getLoadedCustomApps(): AppInfo[] {
+  if (!_customApps) {
+    _customApps = loadCustomApps();
+    console.log("[appMetadata] Loaded custom apps:", _customApps.length, _customApps);
+  }
+  return _customApps;
+}
+
+export const customApps = {
+  get length(): number {
+    return getLoadedCustomApps().length;
+  },
+  get all(): AppInfo[] {
+    return getLoadedCustomApps();
+  },
+};
 
 export function addCustomApp(app: AppInfo) {
-  _customApps.push(app);
-  saveCustomApps(_customApps);
+  getLoadedCustomApps().push(app);
+  saveCustomApps(getLoadedCustomApps());
 }
 
 export function removeCustomApp(appId: string) {
-  const index = _customApps.findIndex(a => a.id === appId);
+  const index = getLoadedCustomApps().findIndex(a => a.id === appId);
   if (index !== -1) {
-    _customApps.splice(index, 1);
-    saveCustomApps(_customApps);
+    getLoadedCustomApps().splice(index, 1);
+    saveCustomApps(getLoadedCustomApps());
   }
 }
 

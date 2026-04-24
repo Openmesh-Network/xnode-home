@@ -1,11 +1,11 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Text } from "../../ui/Text";
 import { IconButton } from "../../ui/IconButton";
 import { Button } from "../../ui/Button";
 import { InputModal } from "../../ui/InputModal";
 import { TextEditorModal } from "../../ui/TextEditorModal";
 import { AppList, AppDetail } from "./AppStoreContent";
-import { availableApps, type AppInfo, customApps as initialCustomApps, addCustomApp as addCustomAppToMetadata } from "./appMetadata";
+import { availableApps, type AppInfo, customApps, addCustomApp as addCustomAppToMetadata } from "./appMetadata";
 import { useToast } from "../../ui/Toast";
 import { useInstalledApps } from "./useInstalledApps";
 
@@ -41,7 +41,8 @@ export function AppStore({ onClose }: { onClose: () => void }) {
   const [customFlake, setCustomFlake] = useState(CUSTOM_FLAKE_TEMPLATE);
   const [editingCustom, setEditingCustom] = useState(false);
 
-  const allApps = [...availableApps, ...initialCustomApps];
+  const loadedCustomApps = useMemo(() => customApps.all, []);
+  const allApps = [...availableApps, ...loadedCustomApps];
 
   const handleCreateCustomApp = (flake: string) => {
     if (!customName.trim()) return;
@@ -82,6 +83,7 @@ export function AppStore({ onClose }: { onClose: () => void }) {
           />
         ) : (
           <AppList
+            apps={allApps}
             onSelectApp={setSelectedApp}
             onCreateCustom={() => setShowCreateCustom(true)}
           />

@@ -6,7 +6,7 @@ import { Card } from "../../ui/Card";
 import { Text } from "../../ui/Text";
 import { IconButton } from "../../ui/IconButton";
 import { TextEditorModal } from "../../ui/TextEditorModal";
-import { availableApps, appCategories, type AppInfo } from "./appMetadata";
+import { appCategories, type AppInfo } from "./appMetadata";
 import { useInstalledApps } from "./useInstalledApps";
 import { useToast } from "../../ui/Toast";
 import { useXNodeClient } from "../../../providers";
@@ -312,9 +312,11 @@ function getDefaultFlake(appId: string): string {
 }
 
 export function AppList({
+  apps,
   onSelectApp,
   onCreateCustom,
 }: {
+  apps: AppInfo[];
   onSelectApp: (app: AppInfo) => void;
   onCreateCustom?: () => void;
 }) {
@@ -331,10 +333,10 @@ export function AppList({
 
   const filteredApps =
     activeCategory === "All"
-      ? availableApps
+      ? apps
       : activeCategory === "Custom"
-        ? availableApps.filter((app) => app.custom)
-        : availableApps.filter((app) => app.category === activeCategory);
+        ? apps.filter((app) => app.custom)
+        : apps.filter((app) => app.category === activeCategory);
 
   const getAppStatus = (app: AppInfo): string | undefined => {
     if (installingAppId === app.id) return "Installing...";

@@ -59,10 +59,6 @@ async function fetchUserConfig(appId: string): Promise<string | null> {
   }
 }
 
-interface InstallOptions {
-  flakeTemplate?: string;
-}
-
 export function useInstalledApps() {
   const client = useXNodeClient();
   const listQuery = useHostListContainer({ client });
@@ -76,7 +72,7 @@ export function useInstalledApps() {
   const installedAppIds = listQuery.data ?? [];
 
   const installApp = useCallback(
-    async (appId: string, appName: string, options: InstallOptions = {}) => {
+    async (appId: string, appName: string, appFlake?: string) => {
       const type: ToastType = "installing";
       const toastId = toastCtx.addToast({
         type,
@@ -100,8 +96,13 @@ export function useInstalledApps() {
         // Step 3: Fetch user config and set flake
         toastCtx.updateToast(toastId, { currentStep: "build" });
         
-        const userConfig = await fetchUserConfig(appId) ?? "";
-        const config = getFlakeTemplate(appId, userConfig);
+        let config: string;
+        if (appFlake) {
+          config = appFlake;
+        } else {
+          const userConfig = await fetchUserConfig(appId) ?? "";
+          config = getFlakeTemplate(appId, userConfig);
+        }
         
         await setMutation.mutateAsync({
           client,

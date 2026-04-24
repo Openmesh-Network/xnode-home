@@ -7,6 +7,7 @@ export interface AppInfo {
   version: string;
   author?: string;
   custom?: boolean;
+  flake?: string;
 }
 
 const _customApps: AppInfo[] = [];

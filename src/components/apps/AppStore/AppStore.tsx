@@ -43,7 +43,7 @@ export function AppStore({ onClose }: { onClose: () => void }) {
 
   const allApps = [...availableApps, ...initialCustomApps];
 
-  const handleCreateCustomApp = () => {
+  const handleCreateCustomApp = (flake: string) => {
     if (!customName.trim()) return;
     
     const appId = `custom-${customName.trim().toLowerCase().replace(/\s+/g, "-")}`;
@@ -56,6 +56,7 @@ export function AppStore({ onClose }: { onClose: () => void }) {
       category: "Custom",
       version: "1.0.0",
       custom: true,
+      flake,
     };
     
     addCustomAppToMetadata(newApp);
@@ -108,7 +109,7 @@ export function AppStore({ onClose }: { onClose: () => void }) {
           onSave={(content) => {
             setCustomFlake(content);
             setEditingCustom(false);
-            handleCreateCustomApp();
+            handleCreateCustomApp(content);
           }}
           onClose={() => {
             setEditingCustom(false);

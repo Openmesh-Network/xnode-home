@@ -91,7 +91,7 @@ export function AppDetail({
     setIsAppInstalling(true);
     setProcessingAppId(app.id);
     try {
-      await installApp(app.id, app.name);
+      await installApp(app.id, app.name, app.flake);
     } finally {
       setIsAppInstalling(false);
       setProcessingAppId(null);

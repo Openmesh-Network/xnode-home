@@ -138,9 +138,14 @@ export function AppDetail({
         currentConfig instanceof Uint8Array
           ? decoder.decode(currentConfig)
           : String(currentConfig);
-      return configStr;
+      return extractUserConfig(configStr);
     }
-    return getDefaultFlake(app.id);
+    return "";
+  };
+
+  const extractUserConfig = (flake: string): string => {
+    const match = flake.match(/# START USER CONFIG\s*([\s\S]*?)\s*# END USER CONFIG/);
+    return match ? match[1].trim() : "";
   };
 
   return (
@@ -194,7 +199,7 @@ export function AppDetail({
                     onClick={handleEditClick}
                     className="w-full px-4 py-2 text-left text-sm hover:bg-[var(--color-bg-hover)] transition-colors"
                   >
-                    Edit Flake
+                    Edit Config
                   </button>
                 </div>
               )}
@@ -263,7 +268,7 @@ export function AppDetail({
 
       {showEdit && (
         <TextEditorModal
-          title={`Edit ${app.name} Flake`}
+          title={`Edit ${app.name} Config`}
           initialContent={getInitialContent()}
           onSave={handleEditSave}
           onClose={handleEditClose}

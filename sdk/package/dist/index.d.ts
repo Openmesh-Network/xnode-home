@@ -165,7 +165,7 @@ type ProcessPath$1 = {
 declare function scope$b(): string;
 type logs_input$1 = WithClient<{
     path: ProcessPath$1;
-    query?: LogQuery;
+    query: LogQuery;
 }>;
 type logs_output$1 = ResponseResult<Vec<Log>>;
 declare function logs$1(input: logs_input$1): Promise<logs_output$1>;
@@ -531,7 +531,7 @@ type ProcessPath = {
 declare function scope$6<Path extends ContainerPath>(path: Path): string;
 type logs_input = WithClient<{
     path: ContainerPath & ProcessPath;
-    query?: LogQuery;
+    query: LogQuery;
 }>;
 type logs_output = ResponseResult<Vec<Log>>;
 declare function logs(input: logs_input): Promise<logs_output>;

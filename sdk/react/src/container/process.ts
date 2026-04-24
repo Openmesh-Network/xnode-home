@@ -35,17 +35,19 @@ export function useContainerProcessLogs({
 
       enabled: !!client && !!container && !!process,
       refetchInterval: 1000,
-
       queryFn: async ({ client: queryClient }) => {
-        if (!client || !container || !process) return [];
+        if (!client || !container || !process) {
+          return undefined;
+        }
 
         const previous =
           queryClient.getQueryData<xnode.container.process.logs_output>([
-            "container",
-            "process",
-            "logs",
             client.baseUrl,
+            "container",
+            container,
+            "process",
             process,
+            "logs",
             level ?? "",
             max ?? 0,
           ]) ?? [];

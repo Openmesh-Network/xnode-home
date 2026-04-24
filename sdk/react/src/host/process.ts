@@ -35,15 +35,17 @@ export function useHostProcessLogs({
       refetchInterval: 1000,
 
       queryFn: async ({ client: queryClient }) => {
-        if (!client || !process) return [];
+        if (!client || !process) {
+          return undefined;
+        }
 
         const previous =
           queryClient.getQueryData<xnode.host.process.logs_output>([
+            client.baseUrl,
             "host",
             "process",
-            "logs",
-            client.baseUrl,
             process,
+            "logs",
             level ?? "",
             max ?? 0,
           ]) ?? [];

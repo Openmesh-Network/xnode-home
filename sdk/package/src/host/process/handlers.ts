@@ -14,7 +14,7 @@ export function scope() {
   return parentScope() + "/process";
 }
 
-export type logs_input = WithClient<{ path: ProcessPath; query?: LogQuery }>;
+export type logs_input = WithClient<{ path: ProcessPath; query: LogQuery }>;
 export type logs_output = ResponseResult<rust_types.Vec<Log>>;
 export async function logs(input: logs_input): Promise<logs_output> {
   return JsonGet(

@@ -467,14 +467,16 @@ function useContainerProcessLogs({ client, container, process, level, max, overr
         enabled: !!client && !!container && !!process,
         refetchInterval: 1000,
         queryFn: async ({ client: queryClient }) => {
-            if (!client || !container || !process)
-                return [];
+            if (!client || !container || !process) {
+                return undefined;
+            }
             const previous = queryClient.getQueryData([
-                "container",
-                "process",
-                "logs",
                 client.baseUrl,
+                "container",
+                container,
+                "process",
                 process,
+                "logs",
                 level ?? "",
                 max ?? 0,
             ]) ?? [];
@@ -1076,14 +1078,15 @@ function useHostProcessLogs({ client, process, level, max, overrides, }) {
         enabled: !!client && !!process,
         refetchInterval: 1000,
         queryFn: async ({ client: queryClient }) => {
-            if (!client || !process)
-                return [];
+            if (!client || !process) {
+                return undefined;
+            }
             const previous = queryClient.getQueryData([
+                client.baseUrl,
                 "host",
                 "process",
-                "logs",
-                client.baseUrl,
                 process,
+                "logs",
                 level ?? "",
                 max ?? 0,
             ]) ?? [];

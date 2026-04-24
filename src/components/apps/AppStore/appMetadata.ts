@@ -10,18 +10,42 @@ export interface AppInfo {
   flake?: string;
 }
 
-const _customApps: AppInfo[] = [];
+const STORAGE_KEY = "xnode-custom-apps";
+
+function loadCustomApps(): AppInfo[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.warn("Failed to load custom apps from localStorage:", e);
+  }
+  return [];
+}
+
+function saveCustomApps(apps: AppInfo[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(apps));
+  } catch (e) {
+    console.warn("Failed to save custom apps to localStorage:", e);
+  }
+}
+
+const _customApps: AppInfo[] = loadCustomApps();
 
 export const customApps = _customApps;
 
 export function addCustomApp(app: AppInfo) {
   _customApps.push(app);
+  saveCustomApps(_customApps);
 }
 
 export function removeCustomApp(appId: string) {
   const index = _customApps.findIndex(a => a.id === appId);
   if (index !== -1) {
     _customApps.splice(index, 1);
+    saveCustomApps(_customApps);
   }
 }
 

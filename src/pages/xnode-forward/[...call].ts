@@ -1,26 +1,38 @@
 import type { APIRoute } from "astro";
+import { Agent, request as undiciRequest } from "undici";
 
 export const ALL = (async ({ request }) => {
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; // Accept self-signed certificates
-
   const headers = new Headers(request.headers);
   headers.set("Host", "manager.xnode.local");
 
   const targetUrl = `https://${request.url.split("/xnode-forward/").at(1)}`;
 
-  return fetch(targetUrl, {
+  const response = await undiciRequest(targetUrl, {
     method: request.method,
     headers,
     body: request.body ? await request.bytes() : undefined,
-  }).then((response) => {
-    // https://github.com/nodejs/undici/issues/2514
-    const headers = new Headers(response.headers);
-    headers.delete("content-encoding");
-    headers.delete("content-length");
-    return new Response(response.body, {
-      headers,
-      status: response.status,
-      statusText: response.statusText,
-    });
+    dispatcher: new Agent({
+      connect: {
+        // Ensure matched to correct upstream for handshake as well
+        servername: "manager.xnode.local",
+        // Accept self-signed certificates
+        rejectUnauthorized: false,
+      },
+    }),
+  });
+
+  const responseHeaders: Record<string, string> = {};
+  for (const [key, value] of Object.entries(response.headers)) {
+    if (value === undefined) {
+      continue;
+    }
+
+    responseHeaders[key] = Array.isArray(value) ? value.join(", ") : value;
+  }
+
+  return new Response(new Uint8Array(await response.body.bytes()), {
+    headers: responseHeaders,
+    status: response.statusCode,
+    statusText: response.statusText,
   });
 }) satisfies APIRoute;

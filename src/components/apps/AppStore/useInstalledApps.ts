@@ -172,7 +172,7 @@ export function useInstalledApps() {
   );
 
   const updateApp = useCallback(
-    async (appId: string, appName: string, flakeTemplate?: string) => {
+    async (appId: string, appName: string, flakeTemplate?: string, isCustomApp?: boolean) => {
       const toastId = toastCtx.addToast({
         type: "updating",
         appName,
@@ -183,11 +183,15 @@ export function useInstalledApps() {
       try {
         toastCtx.updateToast(toastId, { currentStep: "build" });
         
-        const userConfig = await fetchUserConfig(appId) ?? "";
-        
-        const config = typeof flakeTemplate === "string" 
-          ? getFlakeTemplate(appId, userConfig).replace(/# START USER CONFIG[\s\S]*# END USER CONFIG/, `# START USER CONFIG\n${flakeTemplate.split('\n').map(line => '            ' + line).join('\n')}\n            # END USER CONFIG`) 
-          : getFlakeTemplate(appId, userConfig);
+        let config: string;
+        if (isCustomApp && flakeTemplate) {
+          config = flakeTemplate;
+        } else {
+          const userConfig = await fetchUserConfig(appId) ?? "";
+          config = typeof flakeTemplate === "string" 
+            ? getFlakeTemplate(appId, userConfig).replace(/# START USER CONFIG[\s\S]*# END USER CONFIG/, `# START USER CONFIG\n${flakeTemplate.split('\n').map(line => '            ' + line).join('\n')}\n            # END USER CONFIG`) 
+            : getFlakeTemplate(appId, userConfig);
+        }
         
         await setMutation.mutateAsync({
           client,

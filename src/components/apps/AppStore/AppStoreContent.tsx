@@ -123,7 +123,7 @@ export function AppDetail({
     setIsAppInstalling(true);
     setProcessingAppId(app.id);
     try {
-      await updateApp(app.id, app.name, flakeTemplate);
+      await updateApp(app.id, app.name, flakeTemplate, app.custom);
     } finally {
       setIsAppInstalling(false);
       setProcessingAppId(null);
@@ -132,6 +132,12 @@ export function AppDetail({
   };
 
   const getInitialContent = (): string => {
+    if (app.flake && currentConfig) {
+      const decoder = new TextDecoder();
+      return currentConfig instanceof Uint8Array
+        ? decoder.decode(currentConfig)
+        : String(currentConfig);
+    }
     if (currentConfig) {
       const decoder = new TextDecoder();
       const configStr =
@@ -145,7 +151,7 @@ export function AppDetail({
 
   const extractUserConfig = (flake: string): string => {
     const match = flake.match(/# START USER CONFIG\s*([\s\S]*?)\s*# END USER CONFIG/);
-    return match ? match[1].trim() : "";
+    return match ? match[1] : "";
   };
 
   return (

@@ -4,7 +4,7 @@ import { Text } from "../../ui/Text";
 import { Button } from "../../ui/Button";
 import { SortableHeader } from "../../ui/SortableHeader";
 import { useXNodeClient } from "../../../providers";
-import { useHostListProcess, useHostProcessLogs, useHostProcessStatus, useHostProcessStart, useHostProcessStop, useHostProcessRestart, useHostProcessUsage } from "../../../../sdk/react/src";
+import { useHostProcess, useHostProcessLogs, useHostProcessInfo, useHostProcessStart, useHostProcessStop, useHostProcessRestart } from "../../../../sdk/react/src";
 import type { Client } from "../../../../sdk/package/src/common/utils/client";
 
 type SortConfig = { key: string; direction: "asc" | "desc" };
@@ -16,6 +16,11 @@ interface ProcessUsage {
   diskWriteSpeed: number;
   netInSpeed: number;
   netOutSpeed: number;
+  rawCpu?: number;
+  rawDiskRead?: number;
+  rawDiskWrite?: number;
+  rawNetIn?: number;
+  rawNetOut?: number;
 }
 
 interface Process {
@@ -23,6 +28,10 @@ interface Process {
   description: string | null;
   running: boolean;
   usage: ProcessUsage;
+  status?: {
+    running: boolean;
+  };
+  rawUsage?: any;
 }
 
 interface UsageSnapshot {
@@ -165,7 +174,7 @@ function ProcessLogs({ client, processName }: ProcessLogsProps) {
   };
 
   const formatTime = (timestamp: number) => {
-    const date = new Date(timestamp * 1000);
+    const date = new Date(timestamp / 1000); // Convert microseconds to milliseconds
     const hours = date.getHours().toString().padStart(2, "0");
     const minutes = date.getMinutes().toString().padStart(2, "0");
     const seconds = date.getSeconds().toString().padStart(2, "0");
@@ -173,7 +182,7 @@ function ProcessLogs({ client, processName }: ProcessLogsProps) {
   };
 
   const formatDate = (timestamp: number) => {
-    const date = new Date(timestamp * 1000);
+    const date = new Date(timestamp / 1000); // Convert microseconds to milliseconds
     return date.toLocaleDateString() + " " + date.toLocaleTimeString();
   };
 
@@ -206,16 +215,17 @@ interface ProcessDetailProps {
   client: Client;
   processName: string;
   description: string | null;
+  isRunning: boolean;
   onBack: () => void;
 }
 
-function ProcessDetail({ client, processName, description, onBack }: ProcessDetailProps) {
-  const statusQuery = useHostProcessStatus({ client, process: processName });
+function ProcessDetail({ client, processName, description, isRunning, onBack }: ProcessDetailProps) {
+  const infoQuery = useHostProcessInfo({ client, process: processName });
   const startMutation = useHostProcessStart();
   const stopMutation = useHostProcessStop();
   const restartMutation = useHostProcessRestart();
 
-  const isRunning = statusQuery.data?.running ?? false;
+  const processDescription = infoQuery.data?.description ?? description;
 
   const handleStart = () => {
     startMutation.mutate({ client, path: { process: processName } });
@@ -258,87 +268,85 @@ function ProcessDetail({ client, processName, description, onBack }: ProcessDeta
   );
 }
 
-interface ProcessUsageHookProps {
-  client: Client;
-  processName: string;
-}
+// Process usage is now included in the list query with usage: true
 
-function useProcessUsageHook({ client, processName }: ProcessUsageHookProps): ProcessUsage {
-  const query = useHostProcessUsage({ client, process: processName });
-  const prevRef = useRef<UsageSnapshot | null>(null);
-  const timeRef = useRef<number>(0);
-  const [usage, setUsage] = useState<ProcessUsage>({
-    cpu: 0,
-    memory: 0,
-    diskReadSpeed: 0,
-    diskWriteSpeed: 0,
-    netInSpeed: 0,
-    netOutSpeed: 0,
-  });
+function useProcessUsageCalculator(processes: Process[]): Process[] {
+  const prevRef = useRef<Map<string, { usage: any; time: number }>>(new Map());
+  const [calculatedProcesses, setCalculatedProcesses] = useState<Process[]>(processes);
 
   useEffect(() => {
-    const data = query.data;
-    if (!data) return;
+    const now = Date.now();
+    const newMap = new Map<string, { usage: any; time: number }>();
+    const updated: Process[] = processes.map((p) => {
+      const prev = prevRef.current.get(p.name);
+      let usage = p.rawUsage;
 
-    const now = query.dataUpdatedAt || Date.now();
+      if (prev && usage && prev.usage && prev.time > 0) {
+        const timeDelta = (now - prev.time) / 1000;
+        if (timeDelta > 0 && timeDelta < 60) {
+          // Calculate CPU percentage from ticks
+          const cpuTicks = (usage.cpu ?? 0) - (prev.usage.cpu ?? 0);
+          const cpuPercent = Math.min(100, Math.max(0, (cpuTicks / timeDelta / 1e9) * 100));
 
-    if (!prevRef.current || timeRef.current === 0) {
-      prevRef.current = {
-        timestamp: now,
-        cpu: data.cpu ?? 0,
-        disk_read: data.disk_read ?? 0,
-        disk_write: data.disk_write ?? 0,
-        network_ingress: data.network_ingress ?? 0,
-        network_egress: data.network_egress ?? 0,
+          // Calculate speeds from cumulative counters
+          const diskReadSpeed = Math.max(0, ((usage.disk_read ?? 0) - (prev.usage.disk_read ?? 0)) / timeDelta);
+          const diskWriteSpeed = Math.max(0, ((usage.disk_write ?? 0) - (prev.usage.disk_write ?? 0)) / timeDelta);
+          const netInSpeed = Math.max(0, ((usage.network_ingress ?? 0) - (prev.usage.network_ingress ?? 0)) / timeDelta);
+          const netOutSpeed = Math.max(0, ((usage.network_egress ?? 0) - (prev.usage.network_egress ?? 0)) / timeDelta);
+
+          return {
+            ...p,
+            usage: {
+              cpu: cpuPercent,
+              memory: usage.memory ?? 0,
+              diskReadSpeed,
+              diskWriteSpeed,
+              netInSpeed,
+              netOutSpeed,
+              rawCpu: usage.cpu ?? 0,
+              rawDiskRead: usage.disk_read ?? 0,
+              rawDiskWrite: usage.disk_write ?? 0,
+              rawNetIn: usage.network_ingress ?? 0,
+              rawNetOut: usage.network_egress ?? 0,
+            },
+          };
+        }
+      }
+
+      // First reading or invalid time delta - return zero speeds
+      return {
+        ...p,
+        usage: {
+          cpu: 0,
+          memory: usage?.memory ?? 0,
+          diskReadSpeed: 0,
+          diskWriteSpeed: 0,
+          netInSpeed: 0,
+          netOutSpeed: 0,
+          rawCpu: usage?.cpu ?? 0,
+          rawDiskRead: usage?.disk_read ?? 0,
+          rawDiskWrite: usage?.disk_write ?? 0,
+          rawNetIn: usage?.network_ingress ?? 0,
+          rawNetOut: usage?.network_egress ?? 0,
+        },
       };
-      timeRef.current = now;
-      setUsage({
-        cpu: 0,
-        memory: data.memory ?? 0,
-        diskReadSpeed: 0,
-        diskWriteSpeed: 0,
-        netInSpeed: 0,
-        netOutSpeed: 0,
-      });
-      return;
-    }
+    });
 
-    const timeDelta = (now - timeRef.current) / 1000;
+    // Update previous values for next calculation
+    processes.forEach((p) => {
+      if (p.rawUsage) {
+        newMap.set(p.name, { usage: p.rawUsage, time: now });
+      }
+    });
+    prevRef.current = newMap;
+    setCalculatedProcesses(updated);
+  }, [processes]);
 
-    if (timeDelta > 0 && timeDelta < 60) {
-      const prev = prevRef.current;
-      const cpuPercent = Math.min(100, Math.max(0, ((data.cpu ?? 0) - prev.cpu) / timeDelta / 1e9 * 100));
-      const diskReadSpeed = Math.max(0, ((data.disk_read ?? 0) - prev.disk_read) / timeDelta);
-      const diskWriteSpeed = Math.max(0, ((data.disk_write ?? 0) - prev.disk_write) / timeDelta);
-      const netInSpeed = Math.max(0, ((data.network_ingress ?? 0) - prev.network_ingress) / timeDelta);
-      const netOutSpeed = Math.max(0, ((data.network_egress ?? 0) - prev.network_egress) / timeDelta);
-
-      setUsage({
-        cpu: cpuPercent,
-        memory: data.memory ?? 0,
-        diskReadSpeed,
-        diskWriteSpeed,
-        netInSpeed,
-        netOutSpeed,
-      });
-    }
-
-    prevRef.current = {
-      timestamp: now,
-      cpu: data.cpu ?? 0,
-      disk_read: data.disk_read ?? 0,
-      disk_write: data.disk_write ?? 0,
-      network_ingress: data.network_ingress ?? 0,
-      network_egress: data.network_egress ?? 0,
-    };
-    timeRef.current = now;
-  }, [query.data, query.dataUpdatedAt]);
-
-  return usage;
+  return calculatedProcesses;
 }
 
 interface ProcessListWithUsageProps {
-  processes: { name: string; description: string | null; running: boolean }[];
+  processes: Process[];
   client: Client;
   sortConfig: SortConfig;
   onSort: (key: string) => void;
@@ -346,14 +354,7 @@ interface ProcessListWithUsageProps {
 }
 
 function ProcessListWithUsage({ processes, client, sortConfig, onSort, onSelectProcess }: ProcessListWithUsageProps) {
-  const usages = processes.map((p) => useProcessUsageHook({ client, processName: p.name }));
-
-  const processList: Process[] = processes.map((p, i) => ({
-    name: p.name,
-    description: p.description,
-    running: p.running,
-    usage: usages[i],
-  }));
+  const processList: Process[] = processes;
 
   const sortedProcesses = useMemo(() => {
     const sorted = [...processList];
@@ -414,7 +415,7 @@ export function ProcessesTab() {
   const [selectedProcess, setSelectedProcess] = useState<{ name: string; description: string | null } | null>(null);
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: "name", direction: "asc" });
 
-  const { data: processes, isLoading, error } = useHostListProcess({ client });
+  const { data: processes, isLoading, error } = useHostProcess({ client, status: true, usage: true });
 
   const handleSort = (key: string) => {
     if (sortConfig.key === key) {
@@ -436,18 +437,31 @@ export function ProcessesTab() {
     );
   }
 
-  const processData = processes.map((p) => ({
+   const processData = processes.map((p) => ({
     name: p.name,
-    description: p.description ?? null,
-    running: p.running,
+    description: null, // Now comes from info endpoint
+    running: p.status?.running ?? false,
+    rawUsage: p.usage, // Store raw usage for calculation
+    usage: {
+      cpu: 0,
+      memory: p.usage?.memory ?? 0,
+      diskReadSpeed: 0,
+      diskWriteSpeed: 0,
+      netInSpeed: 0,
+      netOutSpeed: 0,
+    },
   }));
 
-  if (selectedProcess) {
+  const calculatedProcesses = useProcessUsageCalculator(processData);
+
+   if (selectedProcess) {
+    const processInfo = calculatedProcesses.find((p) => p.name === selectedProcess.name);
     return (
       <ProcessDetail
         client={client}
         processName={selectedProcess.name}
         description={selectedProcess.description}
+        isRunning={processInfo?.running ?? false}
         onBack={() => setSelectedProcess(null)}
       />
     );
@@ -455,12 +469,12 @@ export function ProcessesTab() {
 
   return (
     <ProcessListWithUsage
-      processes={processData}
+      processes={calculatedProcesses}
       client={client}
       sortConfig={sortConfig}
       onSort={handleSort}
       onSelectProcess={(name) => {
-        const p = processData.find((x) => x.name === name);
+        const p = calculatedProcesses.find((x) => x.name === name);
         if (p) {
           setSelectedProcess({ name: p.name, description: p.description });
         }

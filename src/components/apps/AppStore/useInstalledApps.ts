@@ -6,8 +6,8 @@ import {
   useContainerConfigBuild,
   useContainerConfigApply,
   useContainerRemove,
-} from "../../../../sdk/react/src/container";
-import { useHostListContainer } from "../../../../sdk/react/src/host/list";
+  useContainer,
+} from "../../../../sdk/react/src";
 import { xnode } from "@openmesh-network/xnode-manager-sdk";
 import { useToast, type ToastStep, type ToastType } from "../../ui/Toast";
 
@@ -61,7 +61,7 @@ async function fetchUserConfig(appId: string): Promise<string | null> {
 
 export function useInstalledApps() {
   const client = useXNodeClient();
-  const listQuery = useHostListContainer({ client });
+  const listQuery = useContainer({ client });
   const createMutation = useContainerCreate();
   const setMutation = useContainerConfigSet();
   const buildMutation = useContainerConfigBuild();
@@ -69,7 +69,7 @@ export function useInstalledApps() {
   const removeMutation = useContainerRemove();
   const toastCtx = useToast();
 
-  const installedAppIds = listQuery.data ?? [];
+  const installedAppIds = (listQuery.data ?? []).map((c: any) => c.id);
 
   const installApp = useCallback(
     async (appId: string, appName: string, appFlake?: string) => {

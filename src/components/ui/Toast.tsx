@@ -281,7 +281,7 @@ function LogsModal({
   };
 
   const formatTime = (timestamp: number) => {
-    const date = new Date(timestamp * 1000);
+    const date = new Date(timestamp / 1000); // Convert microseconds to milliseconds
     const hours = date.getHours().toString().padStart(2, "0");
     const minutes = date.getMinutes().toString().padStart(2, "0");
     const seconds = date.getSeconds().toString().padStart(2, "0");

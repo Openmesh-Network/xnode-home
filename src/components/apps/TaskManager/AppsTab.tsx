@@ -1,7 +1,7 @@
 import { Card } from "../../ui/Card";
 import { Text } from "../../ui/Text";
 import { useXNodeClient } from "../../../providers";
-import { useHostListContainer } from "../../../../sdk/react/src";
+import { useContainer } from "../../../../sdk/react/src";
 
 function LoadingState() {
   return (
@@ -21,7 +21,7 @@ function ErrorState({ message }: { message: string }) {
 
 export function AppsTab() {
   const client = useXNodeClient();
-  const { data: containers, isLoading, error } = useHostListContainer({ client });
+  const { data: containers, isLoading, error } = useContainer({ client });
 
   if (isLoading) return <LoadingState />;
   if (error) return <ErrorState message={String(error)} />;
@@ -36,15 +36,15 @@ export function AppsTab() {
   return (
     <Card padding="none">
       <div className="divide-y divide-[var(--color-border)]">
-        {containers.map((container) => (
+        {containers?.map((container) => (
           <div
-            key={container}
+            key={container.id}
             className="flex items-center justify-between px-4 py-3 hover:bg-[var(--color-bg-hover)] transition-colors"
           >
             <div className="flex items-center gap-3">
               <Text size="xl">📦</Text>
               <Text size="sm" color="primary" className="font-mono">
-                {container}
+                {container.id}
               </Text>
             </div>
           </div>

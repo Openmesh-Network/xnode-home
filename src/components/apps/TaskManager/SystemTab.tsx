@@ -6,10 +6,10 @@ import { MetricRow } from "../../ui/MetricRow";
 import { DetailModal } from "../../ui/DetailModal";
 import { useXNodeClient } from "../../../providers";
 import {
-  useHostUsageCpu,
-  useHostUsageMemory,
-  useHostUsageDisk,
-  useHostUsageNetwork,
+  useHostHardwareCpu,
+  useHostHardwareMemoryUsage,
+  useHostHardwareDisk,
+  useHostHardwareNetwork,
 } from "../../../../sdk/react/src";
 import {
   useDiskSpeedCalculator,
@@ -55,17 +55,29 @@ type DetailType = "cpu" | "disk" | "disk-bandwidth" | "network" | null;
 
 export function SystemTab() {
   const client = useXNodeClient();
-  const cpuQuery = useHostUsageCpu({ client });
-  const memQuery = useHostUsageMemory({ client });
-  const diskQuery = useHostUsageDisk({ client });
-  const netQuery = useHostUsageNetwork({ client });
+  const cpuQuery = useHostHardwareCpu({ client, usage: true });
+  const memQuery = useHostHardwareMemoryUsage({ client });
+  const diskQuery = useHostHardwareDisk({ client, usage: true });
+  const netQuery = useHostHardwareNetwork({ client, usage: true });
 
   const [detailType, setDetailType] = useState<DetailType>(null);
 
-  const cpuData = (cpuQuery.data ?? []) as { name: string; used: number; frequency: number }[];
-  const memoryData = memQuery.data as { used: number; total: number } | undefined;
-  const diskData = (diskQuery.data ?? []) as DiskUsageData[];
-  const networkData = (netQuery.data ?? []) as NetworkUsageData[];
+  const cpuData = cpuQuery.data ?? [];
+  const memoryData = memQuery.data as { total: number; available: number } | undefined;
+  const diskData = (diskQuery.data ?? []).map(d => ({
+    mount_point: d.id,
+    used: d.usage?.used ?? 0,
+    total: d.usage?.total ?? 0,
+    read: 0,
+    written: 0,
+  })) as DiskUsageData[];
+  const networkData = (netQuery.data ?? []).map(n => ({
+    name: n.id,
+    mac: "",
+    addresses: [],
+    received: n.usage?.received ?? 0,
+    transmitted: n.usage?.transmitted ?? 0,
+  })) as NetworkUsageData[];
 
   const diskSpeed = useDiskSpeedCalculator(diskData, diskQuery.dataUpdatedAt);
   const networkInterfaces = useNetworkSpeedCalculator(networkData, netQuery.dataUpdatedAt);
@@ -81,10 +93,17 @@ export function SystemTab() {
   if (hasError) return <ErrorState message={String(hasError)} />;
 
   const totalCpuUsage = cpuData.length > 0
-    ? cpuData.reduce((sum: number, cpu) => sum + (cpu.used ?? 0), 0) / cpuData.length
+    ? cpuData.reduce((sum: number, cpu: any) => {
+        if (!cpu.usage) return sum;
+        const total = cpu.usage.user + cpu.usage.nice + cpu.usage.system + cpu.usage.idle + 
+                     cpu.usage.iowait + cpu.usage.irq + cpu.usage.softirq + cpu.usage.steal + 
+                     cpu.usage.guest + cpu.usage.guest_nice;
+        const used = total - (cpu.usage.idle + cpu.usage.iowait);
+        return sum + (total > 0 ? (used / total) * 100 : 0);
+      }, 0) / cpuData.length
     : 0;
 
-  const memUsed = memoryData?.used ?? 0;
+  const memUsed = memoryData ? memoryData.total - memoryData.available : 0;
   const memTotal = memoryData?.total ?? 0;
   const memPercentage = memTotal > 0 ? (memUsed / memTotal) * 100 : 0;
 
@@ -95,11 +114,22 @@ export function SystemTab() {
   const totalDownload = sortedInterfaces.reduce((sum, ni) => sum + ni.downloadSpeed, 0);
   const totalUpload = sortedInterfaces.reduce((sum, ni) => sum + ni.uploadSpeed, 0);
 
-  const cpuDetails = cpuData.map((cpu, i) => ({
-    label: cpu.name || `CPU ${i}`,
-    value: `${Math.round(cpu.used ?? 0)}%`,
-    subValue: cpu.frequency ? `${(cpu.frequency / 1000).toFixed(2)} GHz` : undefined,
-  }));
+  const cpuDetails = cpuData.map((cpu: any, i) => {
+    const usage = cpu.usage;
+    let usedPercent = 0;
+    if (usage) {
+      const total = usage.user + usage.nice + usage.system + usage.idle + 
+                   usage.iowait + usage.irq + usage.softirq + usage.steal + 
+                   usage.guest + usage.guest_nice;
+      const used = total - (usage.idle + usage.iowait);
+      usedPercent = total > 0 ? (used / total) * 100 : 0;
+    }
+    return {
+      label: cpu.id || `CPU ${i}`,
+      value: `${Math.round(usedPercent)}%`,
+      subValue: undefined,
+    };
+  });
 
   const diskCapacityDetails = diskData.map((disk) => ({
     label: disk.mount_point || "Unknown",

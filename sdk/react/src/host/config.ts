@@ -18,8 +18,9 @@ export function useHostConfigGet({
 >): UseQueryOutput<xnode.host.config.get_output> {
   return useQuery(
     {
-      queryKey: [client?.baseUrl ?? "", "host", "config", "get"],
+      queryKey: [client?.baseUrl, "host", "config", "get"],
       enabled: !!client,
+      refetchInterval: 60_000, // 1 minute
       queryFn: async () => {
         if (!client) {
           return undefined;
@@ -68,8 +69,9 @@ export function useHostConfigVersion({
 >): UseQueryOutput<xnode.host.config.version_output> {
   return useQuery(
     {
-      queryKey: [client?.baseUrl ?? "", "host", "config", "version"],
+      queryKey: [client?.baseUrl, "host", "config", "version"],
       enabled: !!client,
+      refetchInterval: 60_000, // 1 minute
       queryFn: async () => {
         if (!client) {
           return undefined;

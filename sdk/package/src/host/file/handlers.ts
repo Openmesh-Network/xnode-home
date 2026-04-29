@@ -16,11 +16,7 @@ import {
   RawPost,
   type WithClient,
 } from "../../common/utils/client.js";
-import { scope as parentScope } from "../scope.js";
-
-export function scope() {
-  return parentScope() + "/file";
-}
+import { scope } from "./scope.js";
 
 export type metadata_input = WithClient<{ query: PathQuery }>;
 export type metadata_output = ResponseResult<Metadata>;

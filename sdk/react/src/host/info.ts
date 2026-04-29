@@ -11,14 +11,7 @@ export function useHostInfoFlakeMetadata({
 >): UseQueryOutput<xnode.host.info.flake.metadata_output> {
   return useQuery(
     {
-      queryKey: [
-        client?.baseUrl ?? "",
-        "host",
-        "info",
-        "flake",
-        flake ?? "",
-        "metadata",
-      ],
+      queryKey: [client?.baseUrl, "host", "info", "flake", flake, "metadata"],
       enabled: !!client && !!flake,
       refetchInterval: 60_000, // 1 minute
       queryFn: async () => {
@@ -39,6 +32,7 @@ export function useHostInfoFlakeMetadata({
 export function useHostInfoEval({
   client,
   statement,
+  config,
   overrides,
 }: UseQueryInput<
   xnode.host.info.eval_input,
@@ -47,11 +41,12 @@ export function useHostInfoEval({
   return useQuery(
     {
       queryKey: [
-        client?.baseUrl ?? "",
+        client?.baseUrl,
         "host",
         "info",
         "eval",
-        statement ?? "",
+        statement,
+        { config },
       ],
       enabled: !!client && !!statement,
       refetchInterval: 60_000, // 1 minute
@@ -62,7 +57,7 @@ export function useHostInfoEval({
 
         return await xnode.host.info.eval({
           client,
-          query: { statement },
+          query: { statement, config: config ?? null },
         });
       },
     },
@@ -79,7 +74,7 @@ export function useHostInfoUsersUsers({
 >): UseQueryOutput<xnode.host.info.users.users_output> {
   return useQuery(
     {
-      queryKey: [client?.baseUrl ?? "", "host", "info", "users", "users"],
+      queryKey: [client?.baseUrl, "host", "info", "users", "users"],
       enabled: !!client,
       refetchInterval: 60_000, // 1 minute
       queryFn: async () => {
@@ -105,7 +100,7 @@ export function useHostInfoUsersGroups({
 >): UseQueryOutput<xnode.host.info.users.groups_output> {
   return useQuery(
     {
-      queryKey: [client?.baseUrl ?? "", "host", "info", "users", "groups"],
+      queryKey: [client?.baseUrl, "host", "info", "users", "groups"],
       enabled: !!client,
       refetchInterval: 60_000, // 1 minute
       queryFn: async () => {

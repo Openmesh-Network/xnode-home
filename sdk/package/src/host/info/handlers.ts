@@ -1,14 +1,9 @@
 import type { Group, User } from "../../common/info.js";
-import type { FlakeMetadata } from "../../common/nix.js";
+import type { EvalQuery, FlakeMetadata, FlakeQuery } from "../../common/nix.js";
 import type { ResponseResult } from "../../common/response.js";
 import { JsonGet, type WithClient } from "../../common/utils/client.js";
 import type { rust_types } from "../../common/utils/index.js";
-import { scope as parentScope } from "../scope.js";
-import type { EvalQuery, FlakeQuery } from "./models.js";
-
-export function scope() {
-  return parentScope() + "/info";
-}
+import { scope } from "./scope.js";
 
 export namespace flake {
   export type metadata_input = WithClient<{ query: FlakeQuery }>;

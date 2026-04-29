@@ -8,11 +8,7 @@ import {
   RawPost,
   type WithClient,
 } from "../../common/utils/client.js";
-import { scope as parentScope } from "../scope.js";
-
-export function scope() {
-  return parentScope() + "/config";
-}
+import { scope } from "./scope.js";
 
 export type get_input = WithClient<{}>;
 export type get_output = ResponseResult<Bytes>;

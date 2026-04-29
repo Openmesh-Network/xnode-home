@@ -1,7 +1,9 @@
-export function scope<Path extends ContainerPath>(path: Path) {
-  return `/container/${encodeURIComponent(path.container)}`;
-}
-
-export type ContainerPath = {
+type ContainerPath = {
   container: string;
 };
+
+export type Path = ContainerPath;
+
+export function scope<P extends Path>(path: P) {
+  return `/container/${encodeURIComponent(path.container)}`;
+}

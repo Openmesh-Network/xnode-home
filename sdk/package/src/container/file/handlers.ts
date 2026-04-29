@@ -16,14 +16,10 @@ import {
   RawPost,
   type WithClient,
 } from "../../common/utils/client.js";
-import { scope as parentScope, type ContainerPath } from "../scope.js";
-
-export function scope<Path extends ContainerPath>(path: Path) {
-  return parentScope(path) + "/file";
-}
+import { scope, type Path } from "./scope.js";
 
 export type metadata_input = WithClient<{
-  path: ContainerPath;
+  path: Path;
   query: PathQuery;
 }>;
 export type metadata_output = ResponseResult<Metadata>;
@@ -33,14 +29,14 @@ export async function metadata(
   return JsonGet(input, (path) => `${scope(path)}/metadata`);
 }
 
-export type size_input = WithClient<{ path: ContainerPath; query: PathQuery }>;
+export type size_input = WithClient<{ path: Path; query: PathQuery }>;
 export type size_output = ResponseResult<Size>;
 export async function size(input: size_input): Promise<size_output> {
   return JsonGet(input, (path) => `${scope(path)}/size`);
 }
 
 export type move_input = WithClient<{
-  path: ContainerPath;
+  path: Path;
   data: SourceDestinationData;
 }>;
 export type move_output = ResponseResult<Bytes>;
@@ -49,7 +45,7 @@ export async function move(input: move_input): Promise<move_output> {
 }
 
 export type remove_input = WithClient<{
-  path: ContainerPath;
+  path: Path;
   query: PathQuery;
 }>;
 export type remove_output = ResponseResult<Bytes>;
@@ -58,7 +54,7 @@ export async function remove(input: remove_input): Promise<remove_output> {
 }
 
 export type copy_input = WithClient<{
-  path: ContainerPath;
+  path: Path;
   data: SourceDestinationData;
 }>;
 export type copy_output = ResponseResult<Bytes>;
@@ -67,7 +63,7 @@ export async function copy(input: copy_input): Promise<copy_output> {
 }
 
 export type read_file_input = WithClient<{
-  path: ContainerPath;
+  path: Path;
   query: PathQuery;
 }>;
 export type read_file_output = ResponseResult<Bytes>;
@@ -78,7 +74,7 @@ export async function read_file(
 }
 
 export type write_file_input = WithClient<{
-  path: ContainerPath;
+  path: Path;
   query: PathQuery;
   data: Bytes;
 }>;
@@ -90,7 +86,7 @@ export async function write_file(
 }
 
 export type read_folder_input = WithClient<{
-  path: ContainerPath;
+  path: Path;
   query: PathQuery & ReadFolderOptions;
 }>;
 export type read_folder_output = ResponseResult<rust_types.Vec<FolderItem>>;
@@ -101,7 +97,7 @@ export async function read_folder(
 }
 
 export type create_folder_input = WithClient<{
-  path: ContainerPath;
+  path: Path;
   query: PathQuery;
 }>;
 export type create_folder_output = ResponseResult<Bytes>;
@@ -112,7 +108,7 @@ export async function create_folder(
 }
 
 export type read_link_input = WithClient<{
-  path: ContainerPath;
+  path: Path;
   query: PathQuery;
 }>;
 export type read_link_output = ResponseResult<String>;
@@ -123,7 +119,7 @@ export async function read_link(
 }
 
 export type write_link_input = WithClient<{
-  path: ContainerPath;
+  path: Path;
   data: SourceDestinationData;
 }>;
 export type write_link_output = ResponseResult<Bytes>;
@@ -134,7 +130,7 @@ export async function write_link(
 }
 
 export type get_permissions_input = WithClient<{
-  path: ContainerPath;
+  path: Path;
   query: PathQuery;
 }>;
 export type get_permissions_output = ResponseResult<rust_types.Vec<Permission>>;
@@ -145,7 +141,7 @@ export async function get_permissions(
 }
 
 export type set_permissions_input = WithClient<{
-  path: ContainerPath;
+  path: Path;
   query: PathQuery;
   data: rust_types.Vec<Permission>;
 }>;

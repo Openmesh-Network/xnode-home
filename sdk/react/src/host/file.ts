@@ -19,7 +19,7 @@ export function useHostFileMetadata({
 >): UseQueryOutput<xnode.host.file.metadata_output> {
   return useQuery(
     {
-      queryKey: [client?.baseUrl ?? "", "host", "file", path ?? "", "metadata"],
+      queryKey: [client?.baseUrl, "host", "file", path, "metadata"],
       enabled: !!client && !!path,
       refetchInterval: 10_000, // 10 seconds
       queryFn: async () => {
@@ -47,7 +47,7 @@ export function useHostFileSize({
 >): UseQueryOutput<xnode.host.file.size_output> {
   return useQuery(
     {
-      queryKey: [client?.baseUrl ?? "", "host", "file", path ?? "", "size"],
+      queryKey: [client?.baseUrl, "host", "file", path, "size"],
       enabled: !!client && !!path,
       refetchInterval: 10_000, // 10 seconds
       queryFn: async () => {
@@ -147,14 +147,7 @@ export function useHostFileReadFile({
 >): UseQueryOutput<xnode.host.file.read_file_output> {
   return useQuery(
     {
-      queryKey: [
-        client?.baseUrl ?? "",
-        "host",
-        "file",
-        path ?? "",
-        "file",
-        "read",
-      ],
+      queryKey: [client?.baseUrl, "host", "file", path, "file", "read"],
       enabled: !!client && !!path,
       refetchInterval: 10_000, // 10 seconds
       queryFn: async () => {
@@ -209,13 +202,13 @@ export function useHostFileReadFolder({
   return useQuery(
     {
       queryKey: [
-        client?.baseUrl ?? "",
+        client?.baseUrl,
         "host",
         "file",
-        path ?? "",
+        path,
         "folder",
         "read",
-        metadata ?? false,
+        { metadata },
       ],
       enabled: !!client && !!path,
       refetchInterval: 10_000, // 10 seconds
@@ -269,14 +262,7 @@ export function useHostFileReadLink({
 >): UseQueryOutput<xnode.host.file.read_link_output> {
   return useQuery(
     {
-      queryKey: [
-        client?.baseUrl ?? "",
-        "host",
-        "file",
-        path ?? "",
-        "link",
-        "read",
-      ],
+      queryKey: [client?.baseUrl, "host", "file", path, "link", "read"],
       enabled: !!client && !!path,
       refetchInterval: 10_000, // 10 seconds
       queryFn: async () => {
@@ -329,14 +315,7 @@ export function useHostFileGetPermissions({
 >): UseQueryOutput<xnode.host.file.get_permissions_output> {
   return useQuery(
     {
-      queryKey: [
-        client?.baseUrl ?? "",
-        "host",
-        "file",
-        path ?? "",
-        "permissions",
-        "read",
-      ],
+      queryKey: [client?.baseUrl, "host", "file", path, "permissions", "read"],
       enabled: !!client && !!path,
       refetchInterval: 10_000, // 10 seconds
       queryFn: async () => {

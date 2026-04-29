@@ -9,17 +9,52 @@ import {
 } from "../utils.js";
 import { xnode } from "@openmesh-network/xnode-manager-sdk";
 
-export function useContainerProcessLogs({
+export function useContainerProcess({
+  client,
+  container,
+  status,
+  usage,
+  overrides,
+}: UseQueryInput<
+  xnode.container.process.process_input,
+  xnode.container.process.process_output
+>): UseQueryOutput<xnode.container.process.process_output> {
+  return useQuery(
+    {
+      queryKey: [
+        client?.baseUrl,
+        "container",
+        container,
+        "process",
+        { status, usage },
+      ],
+      enabled: !!client && !!container && !!process,
+      refetchInterval: usage || status ? 1_000 : 10_000, // 1 or 10 seconds
+      queryFn: async () => {
+        if (!client || !container || !process) {
+          return undefined;
+        }
+
+        return await xnode.container.process.process({
+          client,
+          path: { container },
+          query: { status: status ?? null, usage: usage ?? null },
+        });
+      },
+    },
+    overrides
+  );
+}
+
+export function useContainerProcessInfo({
   client,
   container,
   process,
-  level,
-  max,
   overrides,
 }: UseQueryInput<
-  xnode.container.process.logs_input,
-  xnode.container.process.logs_output
->): UseQueryOutput<xnode.container.process.logs_output> {
+  xnode.container.process.info_input,
+  xnode.container.process.info_output
+>): UseQueryOutput<xnode.container.process.info_output> {
   return useQuery(
     {
       queryKey: [
@@ -28,54 +63,19 @@ export function useContainerProcessLogs({
         container ?? "",
         "process",
         process ?? "",
-        "logs",
-        level ?? "",
-        max ?? 0,
+        "info",
       ],
-
       enabled: !!client && !!container && !!process,
-      refetchInterval: 1000,
-      queryFn: async ({ client: queryClient }) => {
+      refetchInterval: 60_000, // 60 seconds
+      queryFn: async () => {
         if (!client || !container || !process) {
           return undefined;
         }
 
-        const previous =
-          queryClient.getQueryData<xnode.container.process.logs_output>([
-            client.baseUrl,
-            "container",
-            container,
-            "process",
-            process,
-            "logs",
-            level ?? "",
-            max ?? 0,
-          ]) ?? [];
-
-        // All logs before this timestamp we've already received
-        const lastTimestamp =
-          previous.length > 1
-            ? previous[previous.length - 1]?.timestamp
-            : undefined;
-        // We only retain the logs from before this log, this log and everything after will be resent
-        const firstLogOfTimestamp =
-          lastTimestamp !== undefined
-            ? previous.findIndex((log) => log.timestamp === lastTimestamp)
-            : 0;
-
-        const next = await xnode.container.process.logs({
+        return await xnode.container.process.info({
           client,
           path: { container, process },
-          query: {
-            after: lastTimestamp ?? null,
-            level: level ?? null,
-            max: max ?? null,
-          },
         });
-
-        return [...previous.slice(0, firstLogOfTimestamp), ...next].slice(
-          max ? -max : undefined
-        );
       },
     },
     overrides
@@ -112,6 +112,76 @@ export function useContainerProcessStatus({
           client,
           path: { container, process },
         });
+      },
+    },
+    overrides
+  );
+}
+
+export function useContainerProcessLogs({
+  client,
+  container,
+  process,
+  level,
+  max,
+  overrides,
+}: UseQueryInput<
+  xnode.container.process.logs_input,
+  xnode.container.process.logs_output
+>): UseQueryOutput<xnode.container.process.logs_output> {
+  return useQuery(
+    {
+      queryKey: [
+        client?.baseUrl,
+        "container",
+        container,
+        "process",
+        process,
+        "logs",
+        { level, max },
+      ],
+      enabled: !!client && !!container && !!process,
+      refetchInterval: 1_000, // 1 second
+      queryFn: async ({ client: queryClient }) => {
+        if (!client || !container || !process) {
+          return undefined;
+        }
+
+        const previous =
+          queryClient.getQueryData<xnode.container.process.logs_output>([
+            client.baseUrl,
+            "container",
+            container,
+            "process",
+            process,
+            "logs",
+            { level, max },
+          ]) ?? [];
+
+        // All logs before this timestamp we've already received
+        const lastTimestamp =
+          previous.length > 1
+            ? previous[previous.length - 1]?.timestamp
+            : undefined;
+        // We only retain the logs from before this log, this log and everything after will be resent
+        const firstLogOfTimestamp =
+          lastTimestamp !== undefined
+            ? previous.findIndex((log) => log.timestamp === lastTimestamp)
+            : 0;
+
+        const next = await xnode.container.process.logs({
+          client,
+          path: { container, process },
+          query: {
+            after: lastTimestamp ?? null,
+            level: level ?? null,
+            max: max ?? null,
+          },
+        });
+
+        return [...previous.slice(0, firstLogOfTimestamp), ...next].slice(
+          max ? -max : undefined
+        );
       },
     },
     overrides

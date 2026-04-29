@@ -19,13 +19,7 @@ export function useContainerConfigGet({
 >): UseQueryOutput<xnode.container.config.get_output> {
   return useQuery(
     {
-      queryKey: [
-        client?.baseUrl ?? "",
-        "container",
-        container ?? "",
-        "config",
-        "get",
-      ],
+      queryKey: [client?.baseUrl, "container", container, "config", "get"],
       enabled: !!client && !!container,
       queryFn: async () => {
         if (!client || !container) {
@@ -77,13 +71,7 @@ export function useContainerConfigVersion({
 >): UseQueryOutput<xnode.container.config.version_output> {
   return useQuery(
     {
-      queryKey: [
-        client?.baseUrl ?? "",
-        "container",
-        container ?? "",
-        "config",
-        "version",
-      ],
+      queryKey: [client?.baseUrl, "container", container, "config", "version"],
       enabled: !!client && !!container,
       queryFn: async () => {
         if (!client || !container) {

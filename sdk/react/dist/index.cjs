@@ -29,13 +29,7 @@ var utils = /*#__PURE__*/Object.freeze({
 
 function useContainerConfigGet({ client, container, overrides, }) {
     return useQuery({
-        queryKey: [
-            client?.baseUrl ?? "",
-            "container",
-            container ?? "",
-            "config",
-            "get",
-        ],
+        queryKey: [client?.baseUrl, "container", container, "config", "get"],
         enabled: !!client && !!container,
         queryFn: async () => {
             if (!client || !container) {
@@ -63,13 +57,7 @@ function useContainerConfigSet(input = {}) {
 }
 function useContainerConfigVersion({ client, container, overrides, }) {
     return useQuery({
-        queryKey: [
-            client?.baseUrl ?? "",
-            "container",
-            container ?? "",
-            "config",
-            "version",
-        ],
+        queryKey: [client?.baseUrl, "container", container, "config", "version"],
         enabled: !!client && !!container,
         queryFn: async () => {
             if (!client || !container) {
@@ -115,11 +103,11 @@ function useContainerConfigApply(input = {}) {
 function useContainerFileMetadata({ client, container, path, overrides, }) {
     return useQuery({
         queryKey: [
-            client?.baseUrl ?? "",
+            client?.baseUrl,
             "container",
-            container ?? "",
+            container,
             "file",
-            path ?? "",
+            path,
             "metadata",
         ],
         enabled: !!client && !!container && !!path,
@@ -138,14 +126,7 @@ function useContainerFileMetadata({ client, container, path, overrides, }) {
 }
 function useContainerFileSize({ client, container, path, overrides, }) {
     return useQuery({
-        queryKey: [
-            client?.baseUrl ?? "",
-            "container",
-            container ?? "",
-            "file",
-            path ?? "",
-            "size",
-        ],
+        queryKey: [client?.baseUrl, "container", container, "file", path, "size"],
         enabled: !!client && !!container && !!path,
         refetchInterval: 10_000, // 10 seconds
         queryFn: async () => {
@@ -217,11 +198,11 @@ function useContainerFileCopy(input = {}) {
 function useContainerFileReadFile({ client, container, path, overrides, }) {
     return useQuery({
         queryKey: [
-            client?.baseUrl ?? "",
+            client?.baseUrl,
             "container",
-            container ?? "",
+            container,
             "file",
-            path ?? "",
+            path,
             "file",
             "read",
         ],
@@ -255,14 +236,14 @@ function useContainerFileWriteFile(input = {}) {
 function useContainerFileReadFolder({ client, container, path, metadata, overrides, }) {
     return useQuery({
         queryKey: [
-            client?.baseUrl ?? "",
+            client?.baseUrl,
             "container",
-            container ?? "",
+            container,
             "file",
-            path ?? "",
+            path,
             "folder",
             "read",
-            metadata ?? false,
+            { metadata },
         ],
         enabled: !!client && !!container && !!path,
         refetchInterval: 10_000, // 10 seconds
@@ -294,11 +275,11 @@ function useContainerFileCreateFolder(input = {}) {
 function useContainerFileReadLink({ client, container, path, overrides, }) {
     return useQuery({
         queryKey: [
-            client?.baseUrl ?? "",
+            client?.baseUrl,
             "container",
-            container ?? "",
+            container,
             "file",
-            path ?? "",
+            path,
             "link",
             "read",
         ],
@@ -338,11 +319,11 @@ function useContainerWriteLink(input = {}) {
 function useContainerFileGetPermissions({ client, container, path, overrides, }) {
     return useQuery({
         queryKey: [
-            client?.baseUrl ?? "",
+            client?.baseUrl,
             "container",
-            container ?? "",
+            container,
             "file",
-            path ?? "",
+            path,
             "permissions",
             "read",
         ],
@@ -382,12 +363,62 @@ function useContainerFileSetPermissions(input = {}) {
     }, input?.overrides);
 }
 
+function useContainerInfoFlakeMetadata({ client, container, flake, overrides, }) {
+    return useQuery({
+        queryKey: [
+            client?.baseUrl,
+            "container",
+            container,
+            "info",
+            "flake",
+            flake,
+            "metadata",
+        ],
+        enabled: !!client && !!container && !!flake,
+        refetchInterval: 60_000, // 1 minute
+        queryFn: async () => {
+            if (!client || !container || !flake) {
+                return undefined;
+            }
+            return await xnodeManagerSdk.xnode.container.info.flake.metadata({
+                client,
+                path: { container },
+                query: { flake },
+            });
+        },
+    }, overrides);
+}
+function useContainerInfoEval({ client, container, statement, config, overrides, }) {
+    return useQuery({
+        queryKey: [
+            client?.baseUrl,
+            "container",
+            container,
+            "info",
+            "eval",
+            statement,
+            { config },
+        ],
+        enabled: !!client && !!container && !!statement,
+        refetchInterval: 60_000, // 1 minute
+        queryFn: async () => {
+            if (!client || !container || !statement) {
+                return undefined;
+            }
+            return await xnodeManagerSdk.xnode.container.info.eval({
+                client,
+                path: { container },
+                query: { statement, config: config ?? null },
+            });
+        },
+    }, overrides);
+}
 function useContainerInfoUsersUsers({ client, container, overrides, }) {
     return useQuery({
         queryKey: [
-            client?.baseUrl ?? "",
+            client?.baseUrl,
             "container",
-            container ?? "",
+            container,
             "info",
             "users",
             "users",
@@ -408,9 +439,9 @@ function useContainerInfoUsersUsers({ client, container, overrides, }) {
 function useContainerInfoUsersGroups({ client, container, overrides, }) {
     return useQuery({
         queryKey: [
-            client?.baseUrl ?? "",
+            client?.baseUrl,
             "container",
-            container ?? "",
+            container,
             "info",
             "users",
             "groups",
@@ -429,30 +460,30 @@ function useContainerInfoUsersGroups({ client, container, overrides, }) {
     }, overrides);
 }
 
-function useContainerListProcess({ client, container, overrides, }) {
+function useContainerProcess({ client, container, status, usage, overrides, }) {
     return useQuery({
         queryKey: [
-            client?.baseUrl ?? "",
+            client?.baseUrl,
             "container",
-            container ?? "",
-            "list",
+            container,
             "process",
+            { status, usage },
         ],
-        enabled: !!client && !!container,
-        refetchInterval: 10_000, // 10 seconds
+        enabled: !!client && !!container && !!process,
+        refetchInterval: usage || status ? 1_000 : 10_000, // 1 or 10 seconds
         queryFn: async () => {
-            if (!client || !container) {
+            if (!client || !container || !process) {
                 return undefined;
             }
-            return await xnodeManagerSdk.xnode.container.list.process({
+            return await xnodeManagerSdk.xnode.container.process.process({
                 client,
                 path: { container },
+                query: { status: status ?? null, usage: usage ?? null },
             });
         },
     }, overrides);
 }
-
-function useContainerProcessLogs({ client, container, process, level, max, overrides, }) {
+function useContainerProcessInfo({ client, container, process, overrides, }) {
     return useQuery({
         queryKey: [
             client?.baseUrl ?? "",
@@ -460,44 +491,18 @@ function useContainerProcessLogs({ client, container, process, level, max, overr
             container ?? "",
             "process",
             process ?? "",
-            "logs",
-            level ?? "",
-            max ?? 0,
+            "info",
         ],
         enabled: !!client && !!container && !!process,
-        refetchInterval: 1000,
-        queryFn: async ({ client: queryClient }) => {
+        refetchInterval: 60_000, // 60 seconds
+        queryFn: async () => {
             if (!client || !container || !process) {
                 return undefined;
             }
-            const previous = queryClient.getQueryData([
-                client.baseUrl,
-                "container",
-                container,
-                "process",
-                process,
-                "logs",
-                level ?? "",
-                max ?? 0,
-            ]) ?? [];
-            // All logs before this timestamp we've already received
-            const lastTimestamp = previous.length > 1
-                ? previous[previous.length - 1]?.timestamp
-                : undefined;
-            // We only retain the logs from before this log, this log and everything after will be resent
-            const firstLogOfTimestamp = lastTimestamp !== undefined
-                ? previous.findIndex((log) => log.timestamp === lastTimestamp)
-                : 0;
-            const next = await xnodeManagerSdk.xnode.container.process.logs({
+            return await xnodeManagerSdk.xnode.container.process.info({
                 client,
                 path: { container, process },
-                query: {
-                    after: lastTimestamp ?? null,
-                    level: level ?? null,
-                    max: max ?? null,
-                },
             });
-            return [...previous.slice(0, firstLogOfTimestamp), ...next].slice(max ? -max : undefined);
         },
     }, overrides);
 }
@@ -521,6 +526,53 @@ function useContainerProcessStatus({ client, container, process, overrides, }) {
                 client,
                 path: { container, process },
             });
+        },
+    }, overrides);
+}
+function useContainerProcessLogs({ client, container, process, level, max, overrides, }) {
+    return useQuery({
+        queryKey: [
+            client?.baseUrl,
+            "container",
+            container,
+            "process",
+            process,
+            "logs",
+            { level, max },
+        ],
+        enabled: !!client && !!container && !!process,
+        refetchInterval: 1_000, // 1 second
+        queryFn: async ({ client: queryClient }) => {
+            if (!client || !container || !process) {
+                return undefined;
+            }
+            const previous = queryClient.getQueryData([
+                client.baseUrl,
+                "container",
+                container,
+                "process",
+                process,
+                "logs",
+                { level, max },
+            ]) ?? [];
+            // All logs before this timestamp we've already received
+            const lastTimestamp = previous.length > 1
+                ? previous[previous.length - 1]?.timestamp
+                : undefined;
+            // We only retain the logs from before this log, this log and everything after will be resent
+            const firstLogOfTimestamp = lastTimestamp !== undefined
+                ? previous.findIndex((log) => log.timestamp === lastTimestamp)
+                : 0;
+            const next = await xnodeManagerSdk.xnode.container.process.logs({
+                client,
+                path: { container, process },
+                query: {
+                    after: lastTimestamp ?? null,
+                    level: level ?? null,
+                    max: max ?? null,
+                },
+            });
+            return [...previous.slice(0, firstLogOfTimestamp), ...next].slice(max ? -max : undefined);
         },
     }, overrides);
 }
@@ -624,6 +676,21 @@ function useContainerProcessReload(input = {}) {
     }, input?.overrides);
 }
 
+function useContainer({ client, overrides, }) {
+    return useQuery({
+        queryKey: [client?.baseUrl, "container"],
+        enabled: !!client,
+        refetchInterval: 10_000, // 10 seconds
+        queryFn: async () => {
+            if (!client) {
+                return undefined;
+            }
+            return await xnodeManagerSdk.xnode.container.container({
+                client,
+            });
+        },
+    }, overrides);
+}
 function useContainerCreate(input = {}) {
     const queryClient = reactQuery.useQueryClient();
     return useMutation({
@@ -656,8 +723,9 @@ function useContainerRemove(input = {}) {
 
 function useHostConfigGet({ client, overrides, }) {
     return useQuery({
-        queryKey: [client?.baseUrl ?? "", "host", "config", "get"],
+        queryKey: [client?.baseUrl, "host", "config", "get"],
         enabled: !!client,
+        refetchInterval: 60_000, // 1 minute
         queryFn: async () => {
             if (!client) {
                 return undefined;
@@ -683,8 +751,9 @@ function useHostConfigSet(input = {}) {
 }
 function useHostConfigVersion({ client, overrides, }) {
     return useQuery({
-        queryKey: [client?.baseUrl ?? "", "host", "config", "version"],
+        queryKey: [client?.baseUrl, "host", "config", "version"],
         enabled: !!client,
+        refetchInterval: 60_000, // 1 minute
         queryFn: async () => {
             if (!client) {
                 return undefined;
@@ -721,7 +790,7 @@ function useHostConfigApply(input = {}) {
 
 function useHostFileMetadata({ client, path, overrides, }) {
     return useQuery({
-        queryKey: [client?.baseUrl ?? "", "host", "file", path ?? "", "metadata"],
+        queryKey: [client?.baseUrl, "host", "file", path, "metadata"],
         enabled: !!client && !!path,
         refetchInterval: 10_000, // 10 seconds
         queryFn: async () => {
@@ -737,7 +806,7 @@ function useHostFileMetadata({ client, path, overrides, }) {
 }
 function useHostFileSize({ client, path, overrides, }) {
     return useQuery({
-        queryKey: [client?.baseUrl ?? "", "host", "file", path ?? "", "size"],
+        queryKey: [client?.baseUrl, "host", "file", path, "size"],
         enabled: !!client && !!path,
         refetchInterval: 10_000, // 10 seconds
         queryFn: async () => {
@@ -795,14 +864,7 @@ function useHostFileCopy(input = {}) {
 }
 function useHostFileReadFile({ client, path, overrides, }) {
     return useQuery({
-        queryKey: [
-            client?.baseUrl ?? "",
-            "host",
-            "file",
-            path ?? "",
-            "file",
-            "read",
-        ],
+        queryKey: [client?.baseUrl, "host", "file", path, "file", "read"],
         enabled: !!client && !!path,
         refetchInterval: 10_000, // 10 seconds
         queryFn: async () => {
@@ -832,13 +894,13 @@ function useHostFileWriteFile(input = {}) {
 function useHostFileReadFolder({ client, path, metadata, overrides, }) {
     return useQuery({
         queryKey: [
-            client?.baseUrl ?? "",
+            client?.baseUrl,
             "host",
             "file",
-            path ?? "",
+            path,
             "folder",
             "read",
-            metadata ?? false,
+            { metadata },
         ],
         enabled: !!client && !!path,
         refetchInterval: 10_000, // 10 seconds
@@ -868,14 +930,7 @@ function useHostFileCreateFolder(input = {}) {
 }
 function useHostFileReadLink({ client, path, overrides, }) {
     return useQuery({
-        queryKey: [
-            client?.baseUrl ?? "",
-            "host",
-            "file",
-            path ?? "",
-            "link",
-            "read",
-        ],
+        queryKey: [client?.baseUrl, "host", "file", path, "link", "read"],
         enabled: !!client && !!path,
         refetchInterval: 10_000, // 10 seconds
         queryFn: async () => {
@@ -904,14 +959,7 @@ function useHostFileWriteLink(input = {}) {
 }
 function useHostFileGetPermissions({ client, path, overrides, }) {
     return useQuery({
-        queryKey: [
-            client?.baseUrl ?? "",
-            "host",
-            "file",
-            path ?? "",
-            "permissions",
-            "read",
-        ],
+        queryKey: [client?.baseUrl, "host", "file", path, "permissions", "read"],
         enabled: !!client && !!path,
         refetchInterval: 10_000, // 10 seconds
         queryFn: async () => {
@@ -948,14 +996,7 @@ function useHostFileSetPermissions(input = {}) {
 
 function useHostInfoFlakeMetadata({ client, flake, overrides, }) {
     return useQuery({
-        queryKey: [
-            client?.baseUrl ?? "",
-            "host",
-            "info",
-            "flake",
-            flake ?? "",
-            "metadata",
-        ],
+        queryKey: [client?.baseUrl, "host", "info", "flake", flake, "metadata"],
         enabled: !!client && !!flake,
         refetchInterval: 60_000, // 1 minute
         queryFn: async () => {
@@ -969,14 +1010,15 @@ function useHostInfoFlakeMetadata({ client, flake, overrides, }) {
         },
     }, overrides);
 }
-function useHostInfoEval({ client, statement, overrides, }) {
+function useHostInfoEval({ client, statement, config, overrides, }) {
     return useQuery({
         queryKey: [
-            client?.baseUrl ?? "",
+            client?.baseUrl,
             "host",
             "info",
             "eval",
-            statement ?? "",
+            statement,
+            { config },
         ],
         enabled: !!client && !!statement,
         refetchInterval: 60_000, // 1 minute
@@ -986,14 +1028,14 @@ function useHostInfoEval({ client, statement, overrides, }) {
             }
             return await xnodeManagerSdk.xnode.host.info.eval({
                 client,
-                query: { statement },
+                query: { statement, config: config ?? null },
             });
         },
     }, overrides);
 }
 function useHostInfoUsersUsers({ client, overrides, }) {
     return useQuery({
-        queryKey: [client?.baseUrl ?? "", "host", "info", "users", "users"],
+        queryKey: [client?.baseUrl, "host", "info", "users", "users"],
         enabled: !!client,
         refetchInterval: 60_000, // 1 minute
         queryFn: async () => {
@@ -1008,7 +1050,7 @@ function useHostInfoUsersUsers({ client, overrides, }) {
 }
 function useHostInfoUsersGroups({ client, overrides, }) {
     return useQuery({
-        queryKey: [client?.baseUrl ?? "", "host", "info", "users", "groups"],
+        queryKey: [client?.baseUrl, "host", "info", "users", "groups"],
         enabled: !!client,
         refetchInterval: 60_000, // 1 minute
         queryFn: async () => {
@@ -1022,35 +1064,92 @@ function useHostInfoUsersGroups({ client, overrides, }) {
     }, overrides);
 }
 
-function useHostListProcess({ client, overrides, }) {
+function useHostPermissionContainerGet({ client, container, overrides, }) {
     return useQuery({
-        queryKey: [client?.baseUrl ?? "", "host", "list", "process"],
-        enabled: !!client,
-        refetchInterval: 10_000, // 10 seconds
+        queryKey: [
+            client?.baseUrl,
+            "host",
+            "permission",
+            "container",
+            container,
+            "get",
+        ],
+        enabled: !!client && !!container,
+        refetchInterval: 60_000, // 1 minute
         queryFn: async () => {
-            if (!client) {
+            if (!client || !container) {
                 return undefined;
             }
-            return await xnodeManagerSdk.xnode.host.list.process({
+            return await xnodeManagerSdk.xnode.host.permission.container.get({
                 client,
+                path: { container },
             });
         },
     }, overrides);
 }
-function useHostListContainer({ client, overrides, }) {
+function useHostPermissionContainerSet(input = {}) {
+    const queryClient = reactQuery.useQueryClient();
+    return useMutation({
+        mutationFn: xnodeManagerSdk.xnode.host.permission.container.set,
+        onSuccess: (_data, { client, path: { container } }) => {
+            Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        client.baseUrl,
+                        "host",
+                        "permission",
+                        "container",
+                        container,
+                        "get",
+                    ],
+                }),
+            ]);
+        },
+    }, input?.overrides);
+}
+
+function useHostPermissionVirtualMachineGet({ client, virtual_machine, overrides, }) {
     return useQuery({
-        queryKey: [client?.baseUrl ?? "", "host", "list", "container"],
-        enabled: !!client,
-        refetchInterval: 10_000, // 10 seconds
+        queryKey: [
+            client?.baseUrl,
+            "host",
+            "permission",
+            "virtual_machine",
+            virtual_machine,
+            "get",
+        ],
+        enabled: !!client && !!virtual_machine,
+        refetchInterval: 60_000, // 1 minute
         queryFn: async () => {
-            if (!client) {
+            if (!client || !virtual_machine) {
                 return undefined;
             }
-            return await xnodeManagerSdk.xnode.host.list.container({
+            return await xnodeManagerSdk.xnode.host.permission.virtual_machine.get({
                 client,
+                path: { virtual_machine },
             });
         },
     }, overrides);
+}
+function useHostPermissionVirtualMachineSet(input = {}) {
+    const queryClient = reactQuery.useQueryClient();
+    return useMutation({
+        mutationFn: xnodeManagerSdk.xnode.host.permission.virtual_machine.set,
+        onSuccess: (_data, { client, path: { virtual_machine } }) => {
+            Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        client.baseUrl,
+                        "host",
+                        "permission",
+                        "virtual_machine",
+                        virtual_machine,
+                        "get",
+                    ],
+                }),
+            ]);
+        },
+    }, input?.overrides);
 }
 
 function useHostPowerOff(input = {}) {
@@ -1064,19 +1163,66 @@ function useHostPowerReboot(input = {}) {
     }, input?.overrides);
 }
 
+function useHostProcess({ client, status, usage, overrides, }) {
+    return useQuery({
+        queryKey: [client?.baseUrl, "host", "process", { status, usage }],
+        enabled: !!client && !!process,
+        refetchInterval: usage || status ? 1_000 : 10_000, // 1 or 10 seconds
+        queryFn: async () => {
+            if (!client || !process) {
+                return undefined;
+            }
+            return await xnodeManagerSdk.xnode.host.process.process({
+                client,
+                query: { status: status ?? null, usage: usage ?? null },
+            });
+        },
+    }, overrides);
+}
+function useHostProcessInfo({ client, process, overrides, }) {
+    return useQuery({
+        queryKey: [client?.baseUrl, "host", "process", process, "info"],
+        enabled: !!client && !!process,
+        refetchInterval: 60_000, // 60 second
+        queryFn: async () => {
+            if (!client || !process) {
+                return undefined;
+            }
+            return await xnodeManagerSdk.xnode.host.process.info({
+                client,
+                path: { process },
+            });
+        },
+    }, overrides);
+}
+function useHostProcessStatus({ client, process, overrides, }) {
+    return useQuery({
+        queryKey: [client?.baseUrl, "host", "process", process, "status"],
+        enabled: !!client && !!process,
+        refetchInterval: 1_000, // 1 second
+        queryFn: async () => {
+            if (!client || !process) {
+                return undefined;
+            }
+            return await xnodeManagerSdk.xnode.host.process.status({
+                client,
+                path: { process },
+            });
+        },
+    }, overrides);
+}
 function useHostProcessLogs({ client, process, level, max, overrides, }) {
     return useQuery({
         queryKey: [
-            client?.baseUrl ?? "",
+            client?.baseUrl,
             "host",
             "process",
-            process ?? "",
+            process,
             "logs",
-            level ?? "",
-            max ?? 0,
+            { level, max },
         ],
         enabled: !!client && !!process,
-        refetchInterval: 1000,
+        refetchInterval: 1_000, // 1 second
         queryFn: async ({ client: queryClient }) => {
             if (!client || !process) {
                 return undefined;
@@ -1087,8 +1233,7 @@ function useHostProcessLogs({ client, process, level, max, overrides, }) {
                 "process",
                 process,
                 "logs",
-                level ?? "",
-                max ?? 0,
+                { level, max },
             ]) ?? [];
             // All logs before this timestamp we've already received
             const lastTimestamp = previous.length > 1
@@ -1111,37 +1256,9 @@ function useHostProcessLogs({ client, process, level, max, overrides, }) {
         },
     }, overrides);
 }
-function useHostProcessStatus({ client, process, overrides, }) {
-    return useQuery({
-        queryKey: [
-            client?.baseUrl ?? "",
-            "host",
-            "process",
-            process ?? "",
-            "status",
-        ],
-        enabled: !!client && !!process,
-        refetchInterval: 1_000, // 1 second
-        queryFn: async () => {
-            if (!client || !process) {
-                return undefined;
-            }
-            return await xnodeManagerSdk.xnode.host.process.status({
-                client,
-                path: { process },
-            });
-        },
-    }, overrides);
-}
 function useHostProcessUsage({ client, process, overrides, }) {
     return useQuery({
-        queryKey: [
-            client?.baseUrl ?? "",
-            "host",
-            "process",
-            process ?? "",
-            "usage",
-        ],
+        queryKey: [client?.baseUrl, "host", "process", process, "usage"],
         enabled: !!client && !!process,
         refetchInterval: 1_000, // 1 second
         queryFn: async () => {
@@ -1208,82 +1325,222 @@ function useHostProcessReload(input = {}) {
     }, input?.overrides);
 }
 
-function useHostUsageCpu({ client, overrides, }) {
+function useHostHardwareCpu({ client, usage, overrides, }) {
     return useQuery({
-        queryKey: [client?.baseUrl ?? "", "host", "usage", "cpu"],
+        queryKey: [client?.baseUrl, "host", "hardware", "cpu", { usage }],
         enabled: !!client,
-        refetchInterval: 1_000, // 1 second
+        refetchInterval: usage ? 1_000 : false, // 1 second or never
         queryFn: async () => {
             if (!client) {
                 return undefined;
             }
-            return await xnodeManagerSdk.xnode.host.usage.cpu({
+            return await xnodeManagerSdk.xnode.host.hardware.cpu.cpu({
                 client,
+                query: { usage: usage ?? null },
             });
         },
     }, overrides);
 }
-function useHostUsageMemory({ client, overrides, }) {
+function useHostHardwareCpuInfo({ client, cpu, overrides, }) {
     return useQuery({
-        queryKey: [client?.baseUrl ?? "", "host", "usage", "memory"],
-        enabled: !!client,
-        refetchInterval: 1_000, // 1 second
+        queryKey: [client?.baseUrl, "host", "hardware", "cpu", cpu, "info"],
+        enabled: !!client && !!cpu,
         queryFn: async () => {
-            if (!client) {
+            if (!client || !cpu) {
                 return undefined;
             }
-            return await xnodeManagerSdk.xnode.host.usage.memory({
+            return await xnodeManagerSdk.xnode.host.hardware.cpu.info({
                 client,
+                path: { cpu },
             });
         },
     }, overrides);
 }
-function useHostUsageDisk({ client, overrides, }) {
+function useHostHardwareCpuUsage({ client, cpu, overrides, }) {
     return useQuery({
-        queryKey: [client?.baseUrl ?? "", "host", "usage", "disk"],
-        enabled: !!client,
+        queryKey: [client?.baseUrl, "host", "hardware", "cpu", cpu, "usage"],
+        enabled: !!client && !!cpu,
         refetchInterval: 1_000, // 1 second
         queryFn: async () => {
-            if (!client) {
+            if (!client || !cpu) {
                 return undefined;
             }
-            return await xnodeManagerSdk.xnode.host.usage.disk({
+            return await xnodeManagerSdk.xnode.host.hardware.cpu.usage({
                 client,
+                path: { cpu },
             });
         },
     }, overrides);
 }
-function useHostUsageNetwork({ client, overrides, }) {
+
+function useHostHardwareDisk({ client, usage, overrides, }) {
     return useQuery({
-        queryKey: [client?.baseUrl ?? "", "host", "usage", "network"],
+        queryKey: [client?.baseUrl, "host", "hardware", "disk", { usage }],
         enabled: !!client,
-        refetchInterval: 1_000, // 1 second
+        refetchInterval: usage ? 1_000 : false, // 1 second or never
         queryFn: async () => {
             if (!client) {
                 return undefined;
             }
-            return await xnodeManagerSdk.xnode.host.usage.network({
+            return await xnodeManagerSdk.xnode.host.hardware.disk.disk({
                 client,
+                query: { usage: usage ?? null },
             });
         },
     }, overrides);
 }
-function useHostUsageGpu({ client, overrides, }) {
+function useHostHardwareDiskUsage({ client, disk, overrides, }) {
     return useQuery({
-        queryKey: [client?.baseUrl ?? "", "host", "usage", "gpu"],
+        queryKey: [client?.baseUrl, "host", "hardware", "disk", disk, "usage"],
+        enabled: !!client && !!disk,
+        refetchInterval: 1_000, // 1 second
+        queryFn: async () => {
+            if (!client || !disk) {
+                return undefined;
+            }
+            return await xnodeManagerSdk.xnode.host.hardware.disk.usage({
+                client,
+                path: { disk },
+            });
+        },
+    }, overrides);
+}
+
+function useHostHardwareGpuNvidia({ client, usage, overrides, }) {
+    return useQuery({
+        queryKey: [
+            client?.baseUrl,
+            "host",
+            "hardware",
+            "gpu",
+            "nvidia",
+            { usage },
+        ],
+        enabled: !!client,
+        refetchInterval: usage ? 1_000 : false, // 1 second or never
+        queryFn: async () => {
+            if (!client) {
+                return undefined;
+            }
+            return await xnodeManagerSdk.xnode.host.hardware.gpu.nvidia.nvidia({
+                client,
+                query: { usage: usage ?? null },
+            });
+        },
+    }, overrides);
+}
+function useHostHardwareGpuNvidiaInfo({ client, gpu, overrides, }) {
+    return useQuery({
+        queryKey: [client?.baseUrl, "host", "hardware", "gpu", gpu, "info"],
+        enabled: !!client && !!gpu,
+        queryFn: async () => {
+            if (!client || !gpu) {
+                return undefined;
+            }
+            return await xnodeManagerSdk.xnode.host.hardware.gpu.nvidia.info({
+                client,
+                path: { gpu },
+            });
+        },
+    }, overrides);
+}
+function useHostHardwaregpuUsage({ client, gpu, overrides, }) {
+    return useQuery({
+        queryKey: [client?.baseUrl, "host", "hardware", "gpu", gpu, "usage"],
+        enabled: !!client && !!gpu,
+        refetchInterval: 1_000, // 1 second
+        queryFn: async () => {
+            if (!client || !gpu) {
+                return undefined;
+            }
+            return await xnodeManagerSdk.xnode.host.hardware.gpu.nvidia.usage({
+                client,
+                path: { gpu },
+            });
+        },
+    }, overrides);
+}
+
+function useHostHardwareMemoryUsage({ client, overrides, }) {
+    return useQuery({
+        queryKey: [client?.baseUrl, "host", "hardware", "memory", "usage"],
         enabled: !!client,
         refetchInterval: 1_000, // 1 second
         queryFn: async () => {
             if (!client) {
                 return undefined;
             }
-            return await xnodeManagerSdk.xnode.host.usage.gpu({
+            return await xnodeManagerSdk.xnode.host.hardware.memory.usage({
                 client,
             });
         },
     }, overrides);
 }
 
+function useHostHardwareNetwork({ client, usage, overrides, }) {
+    return useQuery({
+        queryKey: [client?.baseUrl, "host", "hardware", "network", { usage }],
+        enabled: !!client,
+        refetchInterval: usage ? 1_000 : false, // 1 second or never
+        queryFn: async () => {
+            if (!client) {
+                return undefined;
+            }
+            return await xnodeManagerSdk.xnode.host.hardware.network.network({
+                client,
+                query: { usage: usage ?? null },
+            });
+        },
+    }, overrides);
+}
+function useHostHardwareNetworkInfo({ client, network, overrides, }) {
+    return useQuery({
+        queryKey: [
+            client?.baseUrl,
+            "host",
+            "hardware",
+            "network",
+            network,
+            "info",
+        ],
+        enabled: !!client && !!network,
+        refetchInterval: 10_000, // 10 seconds
+        queryFn: async () => {
+            if (!client || !network) {
+                return undefined;
+            }
+            return await xnodeManagerSdk.xnode.host.hardware.network.info({
+                client,
+                path: { network },
+            });
+        },
+    }, overrides);
+}
+function useHostHardwareNetworkUsage({ client, network, overrides, }) {
+    return useQuery({
+        queryKey: [
+            client?.baseUrl,
+            "host",
+            "hardware",
+            "network",
+            network,
+            "usage",
+        ],
+        enabled: !!client && !!network,
+        refetchInterval: 1_000, // 1 second
+        queryFn: async () => {
+            if (!client || !network) {
+                return undefined;
+            }
+            return await xnodeManagerSdk.xnode.host.hardware.network.usage({
+                client,
+                path: { network },
+            });
+        },
+    }, overrides);
+}
+
+exports.useContainer = useContainer;
 exports.useContainerConfigApply = useContainerConfigApply;
 exports.useContainerConfigBuild = useContainerConfigBuild;
 exports.useContainerConfigGet = useContainerConfigGet;
@@ -1303,9 +1560,12 @@ exports.useContainerFileRemove = useContainerFileRemove;
 exports.useContainerFileSetPermissions = useContainerFileSetPermissions;
 exports.useContainerFileSize = useContainerFileSize;
 exports.useContainerFileWriteFile = useContainerFileWriteFile;
+exports.useContainerInfoEval = useContainerInfoEval;
+exports.useContainerInfoFlakeMetadata = useContainerInfoFlakeMetadata;
 exports.useContainerInfoUsersGroups = useContainerInfoUsersGroups;
 exports.useContainerInfoUsersUsers = useContainerInfoUsersUsers;
-exports.useContainerListProcess = useContainerListProcess;
+exports.useContainerProcess = useContainerProcess;
+exports.useContainerProcessInfo = useContainerProcessInfo;
 exports.useContainerProcessLogs = useContainerProcessLogs;
 exports.useContainerProcessReload = useContainerProcessReload;
 exports.useContainerProcessRestart = useContainerProcessRestart;
@@ -1334,14 +1594,30 @@ exports.useHostFileSetPermissions = useHostFileSetPermissions;
 exports.useHostFileSize = useHostFileSize;
 exports.useHostFileWriteFile = useHostFileWriteFile;
 exports.useHostFileWriteLink = useHostFileWriteLink;
+exports.useHostHardwareCpu = useHostHardwareCpu;
+exports.useHostHardwareCpuInfo = useHostHardwareCpuInfo;
+exports.useHostHardwareCpuUsage = useHostHardwareCpuUsage;
+exports.useHostHardwareDisk = useHostHardwareDisk;
+exports.useHostHardwareDiskUsage = useHostHardwareDiskUsage;
+exports.useHostHardwareGpuNvidia = useHostHardwareGpuNvidia;
+exports.useHostHardwareGpuNvidiaInfo = useHostHardwareGpuNvidiaInfo;
+exports.useHostHardwareMemoryUsage = useHostHardwareMemoryUsage;
+exports.useHostHardwareNetwork = useHostHardwareNetwork;
+exports.useHostHardwareNetworkInfo = useHostHardwareNetworkInfo;
+exports.useHostHardwareNetworkUsage = useHostHardwareNetworkUsage;
+exports.useHostHardwaregpuUsage = useHostHardwaregpuUsage;
 exports.useHostInfoEval = useHostInfoEval;
 exports.useHostInfoFlakeMetadata = useHostInfoFlakeMetadata;
 exports.useHostInfoUsersGroups = useHostInfoUsersGroups;
 exports.useHostInfoUsersUsers = useHostInfoUsersUsers;
-exports.useHostListContainer = useHostListContainer;
-exports.useHostListProcess = useHostListProcess;
+exports.useHostPermissionContainerGet = useHostPermissionContainerGet;
+exports.useHostPermissionContainerSet = useHostPermissionContainerSet;
+exports.useHostPermissionVirtualMachineGet = useHostPermissionVirtualMachineGet;
+exports.useHostPermissionVirtualMachineSet = useHostPermissionVirtualMachineSet;
 exports.useHostPowerOff = useHostPowerOff;
 exports.useHostPowerReboot = useHostPowerReboot;
+exports.useHostProcess = useHostProcess;
+exports.useHostProcessInfo = useHostProcessInfo;
 exports.useHostProcessLogs = useHostProcessLogs;
 exports.useHostProcessReload = useHostProcessReload;
 exports.useHostProcessRestart = useHostProcessRestart;
@@ -1349,9 +1625,4 @@ exports.useHostProcessStart = useHostProcessStart;
 exports.useHostProcessStatus = useHostProcessStatus;
 exports.useHostProcessStop = useHostProcessStop;
 exports.useHostProcessUsage = useHostProcessUsage;
-exports.useHostUsageCpu = useHostUsageCpu;
-exports.useHostUsageDisk = useHostUsageDisk;
-exports.useHostUsageGpu = useHostUsageGpu;
-exports.useHostUsageMemory = useHostUsageMemory;
-exports.useHostUsageNetwork = useHostUsageNetwork;
 exports.utils = utils;

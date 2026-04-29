@@ -1,16 +1,44 @@
 import { xnode } from "@openmesh-network/xnode-manager-sdk";
 import {
   useMutation,
+  useQuery,
   type UseMutationInput,
   type UseMutationOutput,
+  type UseQueryInput,
+  type UseQueryOutput,
 } from "../utils.js";
 import { useQueryClient } from "@tanstack/react-query";
 
 export * from "./config.js";
 export * from "./file.js";
 export * from "./info.js";
-export * from "./list.js";
 export * from "./process.js";
+
+export function useContainer({
+  client,
+  overrides,
+}: UseQueryInput<
+  xnode.container.container_input,
+  xnode.container.container_output
+>): UseQueryOutput<xnode.container.container_output> {
+  return useQuery(
+    {
+      queryKey: [client?.baseUrl, "container"],
+      enabled: !!client,
+      refetchInterval: 10_000, // 10 seconds
+      queryFn: async () => {
+        if (!client) {
+          return undefined;
+        }
+
+        return await xnode.container.container({
+          client,
+        });
+      },
+    },
+    overrides
+  );
+}
 
 export function useContainerCreate(
   input: UseMutationInput<

@@ -1,11 +1,7 @@
 import type { ResponseResult } from "../../common/response.js";
 import type { Bytes } from "../../common/utils/bytes.js";
 import { RawPost, type WithClient } from "../../common/utils/client.js";
-import { scope as parentScope } from "../scope.js";
-
-export function scope() {
-  return parentScope() + "/power";
-}
+import { scope } from "./scope.js";
 
 export type off_input = WithClient<{}>;
 export type off_output = ResponseResult<Bytes>;

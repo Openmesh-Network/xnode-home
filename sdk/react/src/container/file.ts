@@ -21,11 +21,11 @@ export function useContainerFileMetadata({
   return useQuery(
     {
       queryKey: [
-        client?.baseUrl ?? "",
+        client?.baseUrl,
         "container",
-        container ?? "",
+        container,
         "file",
-        path ?? "",
+        path,
         "metadata",
       ],
       enabled: !!client && !!container && !!path,
@@ -57,14 +57,7 @@ export function useContainerFileSize({
 >): UseQueryOutput<xnode.container.file.size_output> {
   return useQuery(
     {
-      queryKey: [
-        client?.baseUrl ?? "",
-        "container",
-        container ?? "",
-        "file",
-        path ?? "",
-        "size",
-      ],
+      queryKey: [client?.baseUrl, "container", container, "file", path, "size"],
       enabled: !!client && !!container && !!path,
       refetchInterval: 10_000, // 10 seconds
       queryFn: async () => {
@@ -191,11 +184,11 @@ export function useContainerFileReadFile({
   return useQuery(
     {
       queryKey: [
-        client?.baseUrl ?? "",
+        client?.baseUrl,
         "container",
-        container ?? "",
+        container,
         "file",
-        path ?? "",
+        path,
         "file",
         "read",
       ],
@@ -255,14 +248,14 @@ export function useContainerFileReadFolder({
   return useQuery(
     {
       queryKey: [
-        client?.baseUrl ?? "",
+        client?.baseUrl,
         "container",
-        container ?? "",
+        container,
         "file",
-        path ?? "",
+        path,
         "folder",
         "read",
-        metadata ?? false,
+        { metadata },
       ],
       enabled: !!client && !!container && !!path,
       refetchInterval: 10_000, // 10 seconds
@@ -319,11 +312,11 @@ export function useContainerFileReadLink({
   return useQuery(
     {
       queryKey: [
-        client?.baseUrl ?? "",
+        client?.baseUrl,
         "container",
-        container ?? "",
+        container,
         "file",
-        path ?? "",
+        path,
         "link",
         "read",
       ],
@@ -391,11 +384,11 @@ export function useContainerFileGetPermissions({
   return useQuery(
     {
       queryKey: [
-        client?.baseUrl ?? "",
+        client?.baseUrl,
         "container",
-        container ?? "",
+        container,
         "file",
-        path ?? "",
+        path,
         "permissions",
         "read",
       ],

@@ -8,32 +8,28 @@ import {
   RawPost,
   type WithClient,
 } from "../../common/utils/client.js";
-import { scope as parentScope, type ContainerPath } from "../scope.js";
+import { scope, type Path } from "./scope.js";
 
-export function scope<Path extends ContainerPath>(path: Path) {
-  return parentScope(path) + "/config";
-}
-
-export type get_input = WithClient<{ path: ContainerPath }>;
+export type get_input = WithClient<{ path: Path }>;
 export type get_output = ResponseResult<Bytes>;
 export async function get(input: get_input): Promise<get_output> {
   return RawGet(input, (path) => `${scope(path)}/get`);
 }
 
-export type set_input = WithClient<{ path: ContainerPath; data: Bytes }>;
+export type set_input = WithClient<{ path: Path; data: Bytes }>;
 export type set_output = ResponseResult<Bytes>;
 export async function set(input: set_input): Promise<set_output> {
   return RawPost(input, (path) => `${scope(path)}/set`);
 }
 
-export type version_input = WithClient<{ path: ContainerPath }>;
+export type version_input = WithClient<{ path: Path }>;
 export type version_output = ResponseResult<Bytes>;
 export async function version(input: version_input): Promise<version_output> {
   return RawGet(input, (path) => `${scope(path)}/version`);
 }
 
 export type update_input = WithClient<{
-  path: ContainerPath;
+  path: Path;
   data: UpdateData & CommandOptions;
 }>;
 export type update_output = ResponseCommand;
@@ -42,7 +38,7 @@ export async function update(input: update_input): Promise<update_output> {
 }
 
 export type build_input = WithClient<{
-  path: ContainerPath;
+  path: Path;
   data: CommandOptions;
 }>;
 export type build_output = ResponseCommand;
@@ -51,7 +47,7 @@ export async function build(input: build_input): Promise<build_output> {
 }
 
 export type apply_input = WithClient<{
-  path: ContainerPath;
+  path: Path;
   query: ApplyQuery;
   data: CommandOptions;
 }>;

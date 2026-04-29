@@ -9,6 +9,91 @@ import {
 } from "../utils.js";
 import { xnode } from "@openmesh-network/xnode-manager-sdk";
 
+export function useHostProcess({
+  client,
+  status,
+  usage,
+  overrides,
+}: UseQueryInput<
+  xnode.host.process.process_input,
+  xnode.host.process.process_output
+>): UseQueryOutput<xnode.host.process.process_output> {
+  return useQuery(
+    {
+      queryKey: [client?.baseUrl, "host", "process", { status, usage }],
+      enabled: !!client && !!process,
+      refetchInterval: usage || status ? 1_000 : 10_000, // 1 or 10 seconds
+      queryFn: async () => {
+        if (!client || !process) {
+          return undefined;
+        }
+
+        return await xnode.host.process.process({
+          client,
+          query: { status: status ?? null, usage: usage ?? null },
+        });
+      },
+    },
+    overrides
+  );
+}
+
+export function useHostProcessInfo({
+  client,
+  process,
+  overrides,
+}: UseQueryInput<
+  xnode.host.process.info_input,
+  xnode.host.process.info_output
+>): UseQueryOutput<xnode.host.process.info_output> {
+  return useQuery(
+    {
+      queryKey: [client?.baseUrl, "host", "process", process, "info"],
+      enabled: !!client && !!process,
+      refetchInterval: 60_000, // 60 second
+      queryFn: async () => {
+        if (!client || !process) {
+          return undefined;
+        }
+
+        return await xnode.host.process.info({
+          client,
+          path: { process },
+        });
+      },
+    },
+    overrides
+  );
+}
+
+export function useHostProcessStatus({
+  client,
+  process,
+  overrides,
+}: UseQueryInput<
+  xnode.host.process.status_input,
+  xnode.host.process.status_output
+>): UseQueryOutput<xnode.host.process.status_output> {
+  return useQuery(
+    {
+      queryKey: [client?.baseUrl, "host", "process", process, "status"],
+      enabled: !!client && !!process,
+      refetchInterval: 1_000, // 1 second
+      queryFn: async () => {
+        if (!client || !process) {
+          return undefined;
+        }
+
+        return await xnode.host.process.status({
+          client,
+          path: { process },
+        });
+      },
+    },
+    overrides
+  );
+}
+
 export function useHostProcessLogs({
   client,
   process,
@@ -22,18 +107,15 @@ export function useHostProcessLogs({
   return useQuery(
     {
       queryKey: [
-        client?.baseUrl ?? "",
+        client?.baseUrl,
         "host",
         "process",
-        process ?? "",
+        process,
         "logs",
-        level ?? "",
-        max ?? 0,
+        { level, max },
       ],
-
       enabled: !!client && !!process,
-      refetchInterval: 1000,
-
+      refetchInterval: 1_000, // 1 second
       queryFn: async ({ client: queryClient }) => {
         if (!client || !process) {
           return undefined;
@@ -46,8 +128,7 @@ export function useHostProcessLogs({
             "process",
             process,
             "logs",
-            level ?? "",
-            max ?? 0,
+            { level, max },
           ]) ?? [];
 
         // All logs before this timestamp we've already received
@@ -80,40 +161,6 @@ export function useHostProcessLogs({
   );
 }
 
-export function useHostProcessStatus({
-  client,
-  process,
-  overrides,
-}: UseQueryInput<
-  xnode.host.process.status_input,
-  xnode.host.process.status_output
->): UseQueryOutput<xnode.host.process.status_output> {
-  return useQuery(
-    {
-      queryKey: [
-        client?.baseUrl ?? "",
-        "host",
-        "process",
-        process ?? "",
-        "status",
-      ],
-      enabled: !!client && !!process,
-      refetchInterval: 1_000, // 1 second
-      queryFn: async () => {
-        if (!client || !process) {
-          return undefined;
-        }
-
-        return await xnode.host.process.status({
-          client,
-          path: { process },
-        });
-      },
-    },
-    overrides
-  );
-}
-
 export function useHostProcessUsage({
   client,
   process,
@@ -124,13 +171,7 @@ export function useHostProcessUsage({
 >): UseQueryOutput<xnode.host.process.usage_output> {
   return useQuery(
     {
-      queryKey: [
-        client?.baseUrl ?? "",
-        "host",
-        "process",
-        process ?? "",
-        "usage",
-      ],
+      queryKey: [client?.baseUrl, "host", "process", process, "usage"],
       enabled: !!client && !!process,
       refetchInterval: 1_000, // 1 second
       queryFn: async () => {

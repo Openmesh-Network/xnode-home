@@ -1095,6 +1095,8 @@ type Disk = {
 type Usage$3 = {
     total: u64;
     used: u64;
+    read: u64;
+    written: u64;
 };
 
 type DiskPath = {
@@ -1188,6 +1190,7 @@ declare namespace index_d$5 {
 
 type Usage$1 = {
     total: u64;
+    free: u64;
     available: u64;
 };
 

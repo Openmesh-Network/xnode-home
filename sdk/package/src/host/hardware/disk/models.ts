@@ -12,4 +12,6 @@ export type Disk = {
 export type Usage = {
   total: rust_types.u64;
   used: rust_types.u64;
+  read: rust_types.u64;
+  written: rust_types.u64;
 };

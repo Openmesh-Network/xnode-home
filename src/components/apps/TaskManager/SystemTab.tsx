@@ -65,15 +65,13 @@ export function SystemTab() {
   const prevCpuRef = useRef<any[]>([]);
 
   const cpuData = cpuQuery.data ?? [];
-  const memoryData = memQuery.data as
-    | { total: number; available: number }
-    | undefined;
+  const memoryData = memQuery.data;
   const diskData = (diskQuery.data ?? []).map((d) => ({
     mount_point: d.id,
     used: d.usage?.used ?? 0,
     total: d.usage?.total ?? 0,
-    read: 0,
-    written: 0,
+    read: d.usage?.read ?? 0,
+    written: d.usage?.written ?? 0,
   })) as DiskUsageData[];
   const networkData = (netQuery.data ?? []).map((n) => ({
     name: n.id,
@@ -123,7 +121,7 @@ export function SystemTab() {
     };
   }, [cpuData, cpuQuery.dataUpdatedAt]);
 
-  const memUsed = memoryData ? memoryData.total - memoryData.available : 0;
+  const memUsed = memoryData ? memoryData.total - memoryData.free : 0;
   const memTotal = memoryData?.total ?? 0;
   const memPercentage = memTotal > 0 ? (memUsed / memTotal) * 100 : 0;
 

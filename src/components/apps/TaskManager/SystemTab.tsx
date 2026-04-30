@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Card } from "../../ui/Card";
 import { Text } from "../../ui/Text";
 import { CircularMetric } from "../../ui/CircularMetric";
@@ -11,6 +11,7 @@ import {
   useHostHardwareDisk,
   useHostHardwareNetwork,
 } from "../../../../sdk/react/src";
+import { xnode } from "@openmesh-network/xnode-manager-sdk";
 import {
   useDiskSpeedCalculator,
   useNetworkSpeedCalculator,
@@ -61,17 +62,20 @@ export function SystemTab() {
   const netQuery = useHostHardwareNetwork({ client, usage: true });
 
   const [detailType, setDetailType] = useState<DetailType>(null);
+  const prevCpuRef = useRef<any[]>([]);
 
   const cpuData = cpuQuery.data ?? [];
-  const memoryData = memQuery.data as { total: number; available: number } | undefined;
-  const diskData = (diskQuery.data ?? []).map(d => ({
+  const memoryData = memQuery.data as
+    | { total: number; available: number }
+    | undefined;
+  const diskData = (diskQuery.data ?? []).map((d) => ({
     mount_point: d.id,
     used: d.usage?.used ?? 0,
     total: d.usage?.total ?? 0,
     read: 0,
     written: 0,
   })) as DiskUsageData[];
-  const networkData = (netQuery.data ?? []).map(n => ({
+  const networkData = (netQuery.data ?? []).map((n) => ({
     name: n.id,
     mac: "",
     addresses: [],
@@ -80,28 +84,44 @@ export function SystemTab() {
   })) as NetworkUsageData[];
 
   const diskSpeed = useDiskSpeedCalculator(diskData, diskQuery.dataUpdatedAt);
-  const networkInterfaces = useNetworkSpeedCalculator(networkData, netQuery.dataUpdatedAt);
+  const networkInterfaces = useNetworkSpeedCalculator(
+    networkData,
+    netQuery.dataUpdatedAt,
+  );
 
-  const sortedInterfaces = useMemo(() => {
-    return [...networkInterfaces].sort((a, b) => a.name.localeCompare(b.name));
-  }, [networkInterfaces]);
+  // Calculate CPU usage percentage using SDK helper
+  const { totalCpuUsage, cpuDetails: memoizedCpuDetails } = useMemo(() => {
+    const prevData = prevCpuRef.current;
+    let totalPercent = 0;
+    const details = cpuData.map((cpu: any, i) => {
+      const usage = cpu.usage;
+      let usedPercent = 0;
+      if (usage && prevData.length > 0) {
+        const prevCpu = prevData.find((p) => p.id === cpu.id);
+        if (prevCpu && prevCpu.usage) {
+          usedPercent =
+            xnode.common.utils.helpers.cpuUsagePercentage({
+              previous: prevCpu.usage,
+              current: usage,
+            }) * 100;
+          totalPercent += usedPercent;
+        }
+      }
+      return {
+        label: cpu.id || `CPU ${i}`,
+        value: `${Math.round(usedPercent)}%`,
+        subValue: undefined,
+      };
+    });
 
-  const isLoading = cpuQuery.isLoading || memQuery.isLoading || diskQuery.isLoading || netQuery.isLoading;
-  const hasError = cpuQuery.error || memQuery.error || diskQuery.error || netQuery.error;
+    // Update previous data for next calculation
+    prevCpuRef.current = JSON.parse(JSON.stringify(cpuData));
 
-  if (isLoading) return <LoadingState />;
-  if (hasError) return <ErrorState message={String(hasError)} />;
-
-  const totalCpuUsage = cpuData.length > 0
-    ? cpuData.reduce((sum: number, cpu: any) => {
-        if (!cpu.usage) return sum;
-        const total = cpu.usage.user + cpu.usage.nice + cpu.usage.system + cpu.usage.idle + 
-                     cpu.usage.iowait + cpu.usage.irq + cpu.usage.softirq + cpu.usage.steal + 
-                     cpu.usage.guest + cpu.usage.guest_nice;
-        const used = total - (cpu.usage.idle + cpu.usage.iowait);
-        return sum + (total > 0 ? (used / total) * 100 : 0);
-      }, 0) / cpuData.length
-    : 0;
+    return {
+      totalCpuUsage: cpuData.length > 0 ? totalPercent / cpuData.length : 0,
+      cpuDetails: details,
+    };
+  }, [cpuData, cpuQuery.dataUpdatedAt]);
 
   const memUsed = memoryData ? memoryData.total - memoryData.available : 0;
   const memTotal = memoryData?.total ?? 0;
@@ -109,27 +129,19 @@ export function SystemTab() {
 
   const totalDiskUsed = diskData.reduce((sum, d) => sum + d.used, 0);
   const totalDiskTotal = diskData.reduce((sum, d) => sum + d.total, 0);
-  const totalDiskPercentage = totalDiskTotal > 0 ? (totalDiskUsed / totalDiskTotal) * 100 : 0;
+  const totalDiskPercentage =
+    totalDiskTotal > 0 ? (totalDiskUsed / totalDiskTotal) * 100 : 0;
 
-  const totalDownload = sortedInterfaces.reduce((sum, ni) => sum + ni.downloadSpeed, 0);
-  const totalUpload = sortedInterfaces.reduce((sum, ni) => sum + ni.uploadSpeed, 0);
+  const totalDownload = networkInterfaces.reduce(
+    (sum, ni) => sum + ni.downloadSpeed,
+    0,
+  );
+  const totalUpload = networkInterfaces.reduce(
+    (sum, ni) => sum + ni.uploadSpeed,
+    0,
+  );
 
-  const cpuDetails = cpuData.map((cpu: any, i) => {
-    const usage = cpu.usage;
-    let usedPercent = 0;
-    if (usage) {
-      const total = usage.user + usage.nice + usage.system + usage.idle + 
-                   usage.iowait + usage.irq + usage.softirq + usage.steal + 
-                   usage.guest + usage.guest_nice;
-      const used = total - (usage.idle + usage.iowait);
-      usedPercent = total > 0 ? (used / total) * 100 : 0;
-    }
-    return {
-      label: cpu.id || `CPU ${i}`,
-      value: `${Math.round(usedPercent)}%`,
-      subValue: undefined,
-    };
-  });
+  const cpuDetails = memoizedCpuDetails;
 
   const diskCapacityDetails = diskData.map((disk) => ({
     label: disk.mount_point || "Unknown",
@@ -150,7 +162,7 @@ export function SystemTab() {
     },
   ]);
 
-  const networkDetails = sortedInterfaces.flatMap((ni) => [
+  const networkDetails = networkInterfaces.flatMap((ni) => [
     {
       label: `${ni.name} (Download)`,
       value: formatSpeed(ni.downloadSpeed),
@@ -202,8 +214,16 @@ export function SystemTab() {
             >
               Disk Bandwidth
             </Text>
-            <MetricRow label="Read" value={formatSpeed(diskSpeed.total.read)} mono />
-            <MetricRow label="Write" value={formatSpeed(diskSpeed.total.write)} mono />
+            <MetricRow
+              label="Read"
+              value={formatSpeed(diskSpeed.total.read)}
+              mono
+            />
+            <MetricRow
+              label="Write"
+              value={formatSpeed(diskSpeed.total.write)}
+              mono
+            />
           </Card>
           <Card
             padding="md"
@@ -218,23 +238,43 @@ export function SystemTab() {
             >
               Network
             </Text>
-            <MetricRow label="Download" value={formatSpeed(totalDownload)} mono />
+            <MetricRow
+              label="Download"
+              value={formatSpeed(totalDownload)}
+              mono
+            />
             <MetricRow label="Upload" value={formatSpeed(totalUpload)} mono />
           </Card>
         </div>
       </div>
 
       {detailType === "cpu" && (
-        <DetailModal title="CPU Details" items={cpuDetails} onClose={() => setDetailType(null)} />
+        <DetailModal
+          title="CPU Details"
+          items={cpuDetails}
+          onClose={() => setDetailType(null)}
+        />
       )}
       {detailType === "disk" && (
-        <DetailModal title="Disk Capacity" items={diskCapacityDetails} onClose={() => setDetailType(null)} />
+        <DetailModal
+          title="Disk Capacity"
+          items={diskCapacityDetails}
+          onClose={() => setDetailType(null)}
+        />
       )}
       {detailType === "disk-bandwidth" && (
-        <DetailModal title="Disk Bandwidth" items={diskBandwidthDetails} onClose={() => setDetailType(null)} />
+        <DetailModal
+          title="Disk Bandwidth"
+          items={diskBandwidthDetails}
+          onClose={() => setDetailType(null)}
+        />
       )}
       {detailType === "network" && (
-        <DetailModal title="Network Speed" items={networkDetails} onClose={() => setDetailType(null)} />
+        <DetailModal
+          title="Network Speed"
+          items={networkDetails}
+          onClose={() => setDetailType(null)}
+        />
       )}
     </>
   );

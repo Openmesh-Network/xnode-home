@@ -165,10 +165,10 @@ function cpuUsagePercentage({ previous, current, }) {
     const previousTotal = previousIdle + previousBusy;
     const currentTotal = currentIdle + currentBusy;
     const totalDelta = currentTotal - previousTotal;
-    const idleDelta = currentIdle - previousIdle;
+    const busyDelta = currentBusy - previousBusy;
     if (totalDelta <= 0)
         return 0;
-    return (totalDelta - idleDelta) / totalDelta;
+    return busyDelta / totalDelta;
 }
 async function awaitCommand({ client, command, getStatus, pollInterval, }) {
     let _status;

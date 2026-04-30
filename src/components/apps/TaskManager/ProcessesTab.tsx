@@ -347,31 +347,29 @@ export function ProcessesTab() {
   const { data: processes, isLoading, error } = useHostProcess({ client, status: true, usage: true });
 
   // Calculate usage rates - this must be before any early returns
-  const calculatedProcesses: Process[] = useMemo(() => {
-    if (!processes || processes.length === 0) return [];
-    
-    const now = Date.now();
-    const newMap = new Map<string, { usage: any; time: number }>();
-    
-    const result: Process[] = processes
-      .filter((p) => p && p.id)  // Filter out invalid entries
-      .map((p) => {
-        // Map raw process to Process type
-        const processItem: Process = {
-          id: p.id,
-          name: p.id, // Use id as name for display
-          description: null,
-          running: p.status?.running ?? false,
-          rawUsage: p.usage,
-          usage: {
-            cpu: 0,
-            memory: p.usage?.memory ?? 0,
-            diskReadSpeed: 0,
-            diskWriteSpeed: 0,
-            netInSpeed: 0,
-            netOutSpeed: 0,
-          },
-        };
+  // Moving computation outside useMemo to avoid ref access issues
+  const now = Date.now();
+  const newMap = new Map<string, { usage: any; time: number }>();
+  
+  const calculatedProcesses: Process[] = (!processes || processes.length === 0) ? [] : processes
+    .filter((p) => p && p.id)  // Filter out invalid entries
+    .map((p) => {
+      // Map raw process to Process type
+      const processItem: Process = {
+        id: p.id,
+        name: p.id, // Use id as name for display
+        description: null,
+        running: p.status?.running ?? false,
+        rawUsage: p.usage,
+        usage: {
+          cpu: 0,
+          memory: p.usage?.memory ?? 0,
+          diskReadSpeed: 0,
+          diskWriteSpeed: 0,
+          netInSpeed: 0,
+          netOutSpeed: 0,
+        },
+      };
 
       const prev = prevRef.current.get(p.id);
       const usage = p.usage;
@@ -382,34 +380,34 @@ export function ProcessesTab() {
         return processItem;
       }
 
-        if (prev && usage && prev.usage && prev.time > 0) {
-          const timeDelta = (now - prev.time) / 1000;
-          if (timeDelta > 0 && timeDelta < 60) {
-            // Process CPU usage is in nanoseconds - calculate percentage from delta
-            const cpuDelta = (usage.cpu ?? 0) - (prev.usage.cpu ?? 0);
-            const cpuPercent = Math.min(100, Math.max(0, (cpuDelta / timeDelta / 1e9) * 100));
+      if (prev && usage && prev.usage && prev.time > 0) {
+        const timeDelta = (now - prev.time) / 1000;
+        if (timeDelta > 0 && timeDelta < 60) {
+          // Process CPU usage is in nanoseconds - calculate percentage from delta
+          const cpuDelta = (usage.cpu ?? 0) - (prev.usage.cpu ?? 0);
+          const cpuPercent = Math.min(100, Math.max(0, (cpuDelta / timeDelta / 1e9) * 100));
 
-            // Calculate speeds from cumulative counters
-            const diskReadSpeed = Math.max(0, ((usage.disk_read ?? 0) - (prev.usage.disk_read ?? 0)) / timeDelta);
-            const diskWriteSpeed = Math.max(0, ((usage.disk_write ?? 0) - (prev.usage.disk_write ?? 0)) / timeDelta);
-            const netInSpeed = Math.max(0, ((usage.network_ingress ?? 0) - (prev.usage.network_ingress ?? 0)) / timeDelta);
-            const netOutSpeed = Math.max(0, ((usage.network_egress ?? 0) - (prev.usage.network_egress ?? 0)) / timeDelta);
+          // Calculate speeds from cumulative counters
+          const diskReadSpeed = Math.max(0, ((usage.disk_read ?? 0) - (prev.usage.disk_read ?? 0)) / timeDelta);
+          const diskWriteSpeed = Math.max(0, ((usage.disk_write ?? 0) - (prev.usage.disk_write ?? 0)) / timeDelta);
+          const netInSpeed = Math.max(0, ((usage.network_ingress ?? 0) - (prev.usage.network_ingress ?? 0)) / timeDelta);
+          const netOutSpeed = Math.max(0, ((usage.network_egress ?? 0) - (prev.usage.network_egress ?? 0)) / timeDelta);
 
-            newMap.set(p.id, { usage: p.usage, time: now });
+          newMap.set(p.id, { usage: p.usage, time: now });
 
-            return {
-              ...processItem,
-              usage: {
-                cpu: cpuPercent,
-                memory: usage.memory ?? 0,
-                diskReadSpeed,
-                diskWriteSpeed,
-                netInSpeed,
-                netOutSpeed,
-              },
-            };
-          }
+          return {
+            ...processItem,
+            usage: {
+              cpu: cpuPercent,
+              memory: usage.memory ?? 0,
+              diskReadSpeed,
+              diskWriteSpeed,
+              netInSpeed,
+              netOutSpeed,
+            },
+          };
         }
+      }
 
       // First reading or invalid time delta - return zero speeds
       newMap.set(p.id, { usage: p.usage, time: now });
@@ -427,11 +425,8 @@ export function ProcessesTab() {
       };
     });
 
-    // Update previous values for next calculation
-    prevRef.current = newMap;
-    
-    return result;
-  }, [processes]);
+  // Update previous values for next calculation
+  prevRef.current = newMap;
 
   const handleSort = (key: string) => {
     if (sortConfig.key === key) {

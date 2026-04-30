@@ -40,11 +40,11 @@ export function cpuUsagePercentage({
   const currentTotal = currentIdle + currentBusy;
 
   const totalDelta = currentTotal - previousTotal;
-  const idleDelta = currentIdle - previousIdle;
+  const busyDelta = currentBusy - previousBusy;
 
   if (totalDelta <= 0) return 0;
 
-  return (totalDelta - idleDelta) / totalDelta;
+  return busyDelta / totalDelta;
 }
 
 export async function awaitCommand({

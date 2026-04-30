@@ -5,12 +5,14 @@ import { Badge } from "../../ui/Badge";
 import { Card } from "../../ui/Card";
 import { Text } from "../../ui/Text";
 import { IconButton } from "../../ui/IconButton";
+import { Modal } from "../../ui/Modal";
 import { TextEditorModal } from "../../ui/TextEditorModal";
 import { appCategories, type AppInfo } from "./appMetadata";
 import { useInstalledApps } from "./useInstalledApps";
 import { useToast } from "../../ui/Toast";
 import { useXNodeClient } from "../../../providers";
 import { useContainerConfigGet } from "../../../../sdk/react/src/container";
+import { useContainerInfoEval } from "../../../../sdk/react/src/container/info";
 
 function InstallProgress() {
   return (
@@ -68,13 +70,26 @@ export function AppDetail({
   onBack: () => void;
 }) {
   const client = useXNodeClient();
-  const { installedAppIds, installApp, updateApp, uninstallApp, isInstalling, isRemoving } = useInstalledApps();
+  const {
+    installedAppIds,
+    installApp,
+    updateApp,
+    uninstallApp,
+    isInstalling,
+    isRemoving,
+  } = useInstalledApps();
   const { pendingInstalls } = useToast();
   const [processingAppId, setProcessingAppId] = useState<string | null>(null);
   const [showEdit, setShowEdit] = useState(false);
   const [isAppInstalling, setIsAppInstalling] = useState(false);
   const [isAppRemoving, setIsAppRemoving] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [exposeConfig, setExposeConfig] = useState<null | Record<string, any>>(
+    null,
+  );
+  const [shareSubdomain, setShareSubdomain] = useState("");
+  const [shouldFetchExpose, setShouldFetchExpose] = useState(false);
 
   const isInstalled = installedAppIds.includes(app.id);
   const isPendingInstall = pendingInstalls.has(app.id);
@@ -86,6 +101,18 @@ export function AppDetail({
     container: app.id,
     overrides: { enabled: !!client && !!app.id && showEdit },
   });
+
+  const { data: exposeData, isLoading: isExposeLoading } = useContainerInfoEval(
+    {
+      client,
+      container: app.id,
+      statement: "config.xnode.manager.expose",
+      config: true,
+      overrides: {
+        enabled: shouldFetchExpose && isInstalled && !!client,
+      },
+    },
+  );
 
   const handleInstall = async () => {
     setIsAppInstalling(true);
@@ -116,6 +143,31 @@ export function AppDetail({
 
   const handleEditClose = () => {
     setShowEdit(false);
+  };
+
+  useEffect(() => {
+    if (exposeData !== undefined) {
+      if (
+        exposeData &&
+        typeof exposeData === "object" &&
+        !Array.isArray(exposeData)
+      ) {
+        const data = exposeData as Record<string, any>;
+        setExposeConfig(data);
+        if (Object.keys(data).length > 0) {
+          setShareSubdomain(data.subdomain || "");
+        }
+      } else {
+        setExposeConfig({});
+      }
+      setShowShareModal(true);
+      setShouldFetchExpose(false);
+    }
+  }, [exposeData]);
+
+  const handleShareClick = () => {
+    setShowMenu(false);
+    setShouldFetchExpose(true);
   };
 
   const handleEditSave = async (flakeTemplate: string) => {
@@ -150,7 +202,9 @@ export function AppDetail({
   };
 
   const extractUserConfig = (flake: string): string => {
-    const match = flake.match(/# START USER CONFIG\s*([\s\S]*?)\s*# END USER CONFIG/);
+    const match = flake.match(
+      /# START USER CONFIG\s*([\s\S]*?)\s*# END USER CONFIG/,
+    );
     return match ? match[1] : "";
   };
 
@@ -206,6 +260,12 @@ export function AppDetail({
                     className="w-full px-4 py-2 text-left text-sm hover:bg-[var(--color-bg-hover)] transition-colors"
                   >
                     Edit Config
+                  </button>
+                  <button
+                    onClick={handleShareClick}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-[var(--color-bg-hover)] transition-colors"
+                  >
+                    Share
                   </button>
                 </div>
               )}
@@ -279,6 +339,66 @@ export function AppDetail({
           onSave={handleEditSave}
           onClose={handleEditClose}
         />
+      )}
+
+      {showShareModal && (
+        <>
+          {exposeConfig && Object.keys(exposeConfig).length > 0 ? (
+            <Modal
+              title={`Share ${app.name}`}
+              onClose={() => {
+                setShowShareModal(false);
+                setExposeConfig(null);
+                setShareSubdomain("");
+              }}
+              confirmText="Share"
+              onConfirm={() => {
+                const updatedConfig = {
+                  ...exposeConfig,
+                  subdomain: shareSubdomain,
+                };
+                console.log(JSON.stringify(updatedConfig, null, 2));
+                setShowShareModal(false);
+                setExposeConfig(null);
+                setShareSubdomain("");
+              }}
+            >
+              <div className="space-y-4">
+                <Text color="secondary">
+                  Customize the subdomain for sharing this app:
+                </Text>
+                <input
+                  type="text"
+                  value={shareSubdomain}
+                  onChange={(e) => setShareSubdomain(e.target.value)}
+                  className="w-full bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-lg p-3 text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)]"
+                  placeholder="Enter subdomain"
+                />
+                <Text size="sm" color="muted">
+                  The expose configuration will be printed to the console.
+                </Text>
+              </div>
+            </Modal>
+          ) : (
+            <Modal
+              title="Share App"
+              onClose={() => {
+                setShowShareModal(false);
+                setExposeConfig(null);
+              }}
+              showCancel={false}
+              confirmText="Close"
+              onConfirm={() => {
+                setShowShareModal(false);
+                setExposeConfig(null);
+              }}
+            >
+              <Text color="secondary">
+                This app doesn't have anything to expose.
+              </Text>
+            </Modal>
+          )}
+        </>
       )}
     </div>
   );

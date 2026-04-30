@@ -64,22 +64,29 @@ export function SystemTab() {
   const [detailType, setDetailType] = useState<DetailType>(null);
   const prevCpuRef = useRef<any[]>([]);
 
-  const cpuData = cpuQuery.data ?? [];
+  const cpuData = (cpuQuery.data ?? []).sort((a, b) =>
+    a.id.localeCompare(b.id),
+  );
   const memoryData = memQuery.data;
-  const diskData = (diskQuery.data ?? []).map((d) => ({
-    mount_point: d.id,
-    used: d.usage?.used ?? 0,
-    total: d.usage?.total ?? 0,
-    read: d.usage?.read ?? 0,
-    written: d.usage?.written ?? 0,
-  })) as DiskUsageData[];
-  const networkData = (netQuery.data ?? []).map((n) => ({
-    name: n.id,
-    mac: "",
-    addresses: [],
-    received: n.usage?.received ?? 0,
-    transmitted: n.usage?.transmitted ?? 0,
-  })) as NetworkUsageData[];
+  const diskData = (diskQuery.data ?? [])
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .map((d) => ({
+      mount_point: d.id,
+      used: d.usage?.used ?? 0,
+      total: d.usage?.total ?? 0,
+      read: d.usage?.read ?? 0,
+      written: d.usage?.written ?? 0,
+    })) as DiskUsageData[];
+  const networkData = (netQuery.data ?? [])
+    .filter((n) => n.id.startsWith("en") || n.id.startsWith("wl"))
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .map((n) => ({
+      name: n.id,
+      mac: "",
+      addresses: [],
+      received: n.usage?.received ?? 0,
+      transmitted: n.usage?.transmitted ?? 0,
+    })) as NetworkUsageData[];
 
   const diskSpeed = useDiskSpeedCalculator(diskData, diskQuery.dataUpdatedAt);
   const networkInterfaces = useNetworkSpeedCalculator(
@@ -149,27 +156,17 @@ export function SystemTab() {
 
   const diskBandwidthDetails = diskSpeed.details.flatMap((disk) => [
     {
-      label: `${disk.mount_point || "Unknown"} (Read)`,
-      value: formatSpeed(disk.readSpeed),
-      subValue: undefined,
-    },
-    {
-      label: `${disk.mount_point || "Unknown"} (Write)`,
-      value: formatSpeed(disk.writeSpeed),
+      label: disk.mount_point,
+      value: `↓${formatSpeed(disk.readSpeed)} ↑${formatSpeed(disk.writeSpeed)}`,
       subValue: undefined,
     },
   ]);
 
   const networkDetails = networkInterfaces.flatMap((ni) => [
     {
-      label: `${ni.name} (Download)`,
-      value: formatSpeed(ni.downloadSpeed),
+      label: ni.name,
+      value: `↓${formatSpeed(ni.downloadSpeed)} ↑${formatSpeed(ni.uploadSpeed)}`,
       subValue: ni.addresses.length > 0 ? ni.addresses.join(", ") : undefined,
-    },
-    {
-      label: `${ni.name} (Upload)`,
-      value: formatSpeed(ni.uploadSpeed),
-      subValue: undefined,
     },
   ]);
 

@@ -142,6 +142,32 @@ async function reload$1(input) {
     return RawPost(input, (path) => `${scope$j(path)}/reload`);
 }
 
+/// Returns 1 for 100%
+function cpuUsagePercentage({ previous, current, }) {
+    // Idle = idle + iowait
+    const previousIdle = previous.idle + previous.iowait;
+    const currentIdle = current.idle + current.iowait;
+    // Busy = user + nice + system + irq + softirq + steal
+    const previousBusy = previous.user +
+        previous.nice +
+        previous.system +
+        previous.irq +
+        previous.softirq +
+        previous.steal;
+    const currentBusy = current.user +
+        current.nice +
+        current.system +
+        current.irq +
+        current.softirq +
+        current.steal;
+    const previousTotal = previousIdle + previousBusy;
+    const currentTotal = currentIdle + currentBusy;
+    const totalDelta = currentTotal - previousTotal;
+    const idleDelta = currentIdle - previousIdle;
+    if (totalDelta <= 0)
+        return 0;
+    return (totalDelta - idleDelta) / totalDelta;
+}
 async function awaitCommand({ client, command, getStatus, pollInterval, }) {
     let _status;
     while (!_status || _status.running) {
@@ -155,7 +181,8 @@ async function awaitCommand({ client, command, getStatus, pollInterval, }) {
 
 var helpers = /*#__PURE__*/Object.freeze({
     __proto__: null,
-    awaitCommand: awaitCommand
+    awaitCommand: awaitCommand,
+    cpuUsagePercentage: cpuUsagePercentage
 });
 
 var index$n = /*#__PURE__*/Object.freeze({

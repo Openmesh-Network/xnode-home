@@ -21,10 +21,10 @@ export function useHostProcess({
   return useQuery(
     {
       queryKey: [client?.baseUrl, "host", "process", { status, usage }],
-      enabled: !!client && !!process,
+      enabled: !!client,
       refetchInterval: usage || status ? 1_000 : 10_000, // 1 or 10 seconds
       queryFn: async () => {
-        if (!client || !process) {
+        if (!client) {
           return undefined;
         }
 

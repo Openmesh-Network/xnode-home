@@ -6,7 +6,7 @@ export type ProcessOptions = {
 };
 
 export type Process = {
-  name: rust_types.String;
+  id: rust_types.String;
   status: rust_types.Option<Status>;
   usage: rust_types.Option<Usage>;
 };

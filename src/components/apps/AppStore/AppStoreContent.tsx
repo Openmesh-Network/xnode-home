@@ -13,6 +13,21 @@ import { useToast } from "../../ui/Toast";
 import { useXNodeClient } from "../../../providers";
 import { useContainerConfigGet } from "../../../../sdk/react/src/container";
 import { useContainerInfoEval } from "../../../../sdk/react/src/container/info";
+import { useHostFileWriteFile } from "../../../../sdk/react/src/host/file";
+
+type Location = { port: number } | { socket: string };
+type Expose = {
+  subdomain: string;
+  http: {
+    [path: string]: {
+      protocol: "http" | "https";
+      location: Location;
+      path: "/";
+    };
+  };
+  tcp: { [port: string]: { location: Location } };
+  udp: { [port: string]: { location: Location } };
+};
 
 function InstallProgress() {
   return (
@@ -85,11 +100,9 @@ export function AppDetail({
   const [isAppRemoving, setIsAppRemoving] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
-  const [exposeConfig, setExposeConfig] = useState<null | Record<string, any>>(
-    null,
-  );
+  const [isShareLoading, setIsShareLoading] = useState(false);
+  const [exposeConfig, setExposeConfig] = useState<null | Expose>(null);
   const [shareSubdomain, setShareSubdomain] = useState("");
-  const [shouldFetchExpose, setShouldFetchExpose] = useState(false);
 
   const isInstalled = installedAppIds.includes(app.id);
   const isPendingInstall = pendingInstalls.has(app.id);
@@ -102,17 +115,19 @@ export function AppDetail({
     overrides: { enabled: !!client && !!app.id && showEdit },
   });
 
-  const { data: exposeData, isLoading: isExposeLoading } = useContainerInfoEval(
-    {
-      client,
-      container: app.id,
-      statement: "config.xnode.manager.expose",
-      config: true,
-      overrides: {
-        enabled: shouldFetchExpose && isInstalled && !!client,
-      },
+  const {
+    data: exposeData,
+    isLoading: isExposeLoading,
+    refetch: refetchExpose,
+  } = useContainerInfoEval({
+    client,
+    container: app.id,
+    statement: "config.xnode.manager.expose",
+    config: true,
+    overrides: {
+      enabled: false,
     },
-  );
+  });
 
   const handleInstall = async () => {
     setIsAppInstalling(true);
@@ -146,28 +161,53 @@ export function AppDetail({
   };
 
   useEffect(() => {
-    if (exposeData !== undefined) {
-      if (
-        exposeData &&
-        typeof exposeData === "object" &&
-        !Array.isArray(exposeData)
-      ) {
-        const data = exposeData as Record<string, any>;
-        setExposeConfig(data);
-        if (Object.keys(data).length > 0) {
-          setShareSubdomain(data.subdomain || "");
-        }
-      } else {
-        setExposeConfig({});
-      }
-      setShowShareModal(true);
-      setShouldFetchExpose(false);
-    }
-  }, [exposeData]);
+    if (exposeData !== undefined && showShareModal) {
+      setIsShareLoading(false);
+      console.log("exposeData raw:", exposeData, typeof exposeData);
+      let parsedData: any = exposeData;
 
-  const handleShareClick = () => {
+      // Handle if data is wrapped in a response object with 'data' property
+      if (
+        parsedData &&
+        typeof parsedData === "object" &&
+        "data" in parsedData &&
+        parsedData.data
+      ) {
+        parsedData = parsedData.data;
+      }
+
+      // Handle string data
+      if (typeof parsedData === "string") {
+        try {
+          parsedData = JSON.parse(parsedData);
+        } catch (e) {
+          console.error("Failed to parse expose data:", e);
+          setExposeConfig(null);
+          return;
+        }
+      }
+
+      console.log("exposeData parsed:", parsedData);
+
+      if (
+        parsedData &&
+        typeof parsedData === "object" &&
+        !Array.isArray(parsedData)
+      ) {
+        setExposeConfig(parsedData);
+        setShareSubdomain(parsedData.subdomain || "");
+      } else {
+        setExposeConfig(null);
+      }
+    }
+  }, [exposeData, showShareModal]);
+
+  const handleShareClick = async () => {
     setShowMenu(false);
-    setShouldFetchExpose(true);
+    setExposeConfig(null);
+    setIsShareLoading(true);
+    setShowShareModal(true);
+    await refetchExpose();
   };
 
   const handleEditSave = async (flakeTemplate: string) => {
@@ -207,6 +247,8 @@ export function AppDetail({
     );
     return match ? match[1] : "";
   };
+
+  const hostFileWriteFile = useHostFileWriteFile();
 
   return (
     <div className="p-6 space-y-6">
@@ -343,7 +385,40 @@ export function AppDetail({
 
       {showShareModal && (
         <>
-          {exposeConfig && Object.keys(exposeConfig).length > 0 ? (
+          {isShareLoading ? (
+            <Modal
+              title={`Share ${app.name}`}
+              onClose={() => {
+                setShowShareModal(false);
+                setIsShareLoading(false);
+                setExposeConfig(null);
+              }}
+            >
+              <div className="flex items-center gap-2 justify-center py-4">
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+                <Text>Loading...</Text>
+              </div>
+            </Modal>
+          ) : exposeConfig !== null &&
+            Object.keys(exposeConfig.http).length +
+              Object.keys(exposeConfig.tcp).length +
+              Object.keys(exposeConfig.udp).length >
+              0 ? (
             <Modal
               title={`Share ${app.name}`}
               onClose={() => {
@@ -357,27 +432,80 @@ export function AppDetail({
                   ...exposeConfig,
                   subdomain: shareSubdomain,
                 };
-                console.log(JSON.stringify(updatedConfig, null, 2));
+                const encoder = new TextEncoder();
+                hostFileWriteFile.mutate({
+                  client,
+                  query: {
+                    path: `/var/lib/xnode-manager/host/config/xnode-config/apps/${app.id}`,
+                  },
+                  data: encoder.encode(`\
+{ pkgs, ... }@args:
+{
+  services.xnode-reverse-proxy.http."${shareSubdomain}.xnodeos.local" = {
+${Object.keys(exposeConfig.http).map(
+  (path) => `\
+    "${path}" = {
+      protocol = "${exposeConfig.http[path].protocol}";
+      location = [ ${
+        "port" in exposeConfig.http[path].location
+          ? `{ domain = "${app.id}.container.internal"; port = ${exposeConfig.http[path].location.port}; }`
+          : "socket" in exposeConfig.http[path].location
+            ? `{ socket = "/var/lib/xnode-manager/container/${app.id}/data${exposeConfig.http[path].location.socket}"; }`
+            : ""
+      } ];
+      path = "${exposeConfig.http[path].path}";
+    };`,
+)}
+  };
+  services.xnode-reverse-proxy.tcp = {
+${Object.keys(exposeConfig.tcp).map(
+  (port) => `\
+    "${port}" = {
+      location = [ ${
+        "port" in exposeConfig.tcp[port].location
+          ? `{ domain = "${app.id}.container.internal"; port = ${exposeConfig.tcp[port].location.port}; }`
+          : "socket" in exposeConfig.tcp[port].location
+            ? `{ socket = "/var/lib/xnode-manager/container/${app.id}/data${exposeConfig.tcp[port].location.socket}"; }`
+            : ""
+      } ];
+    };`,
+)}
+  };
+  services.xnode-reverse-proxy.udp = {
+${Object.keys(exposeConfig.udp).map(
+  (port) => `\
+    "${port}" = {
+      location = [ ${
+        "port" in exposeConfig.udp[port].location
+          ? `{ domain = "${app.id}.container.internal"; port = ${exposeConfig.udp[port].location.port}; }`
+          : "socket" in exposeConfig.udp[port].location
+            ? `{ socket = "/var/lib/xnode-manager/container/${app.id}/data${exposeConfig.udp[port].location.socket}"; }`
+            : ""
+      } ];
+    };`,
+)}
+  };
+}`),
+                });
                 setShowShareModal(false);
                 setExposeConfig(null);
                 setShareSubdomain("");
               }}
             >
-              <div className="space-y-4">
-                <Text color="secondary">
-                  Customize the subdomain for sharing this app:
-                </Text>
-                <input
-                  type="text"
-                  value={shareSubdomain}
-                  onChange={(e) => setShareSubdomain(e.target.value)}
-                  className="w-full bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-lg p-3 text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)]"
-                  placeholder="Enter subdomain"
-                />
-                <Text size="sm" color="muted">
-                  The expose configuration will be printed to the console.
-                </Text>
-              </div>
+              {Object.keys(exposeConfig.http).length > 0 && (
+                <div className="space-y-4">
+                  <Text color="secondary">
+                    Customize the subdomain for sharing this app:
+                  </Text>
+                  <input
+                    type="text"
+                    value={shareSubdomain}
+                    onChange={(e) => setShareSubdomain(e.target.value)}
+                    className="w-full bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-lg p-3 text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)]"
+                    placeholder="Enter subdomain"
+                  />
+                </div>
+              )}
             </Modal>
           ) : (
             <Modal
@@ -385,16 +513,18 @@ export function AppDetail({
               onClose={() => {
                 setShowShareModal(false);
                 setExposeConfig(null);
+                setIsShareLoading(false);
               }}
               showCancel={false}
               confirmText="Close"
               onConfirm={() => {
                 setShowShareModal(false);
                 setExposeConfig(null);
+                setIsShareLoading(false);
               }}
             >
               <Text color="secondary">
-                This app doesn't have anything to expose.
+                This app doesn't have anything to share.
               </Text>
             </Modal>
           )}

@@ -7,6 +7,7 @@ import {
   useContainerConfigApply,
   useContainerRemove,
   useContainer,
+  useHostPermissionContainerSet,
 } from "../../../../sdk/react/src";
 import { xnode } from "@openmesh-network/xnode-manager-sdk";
 import { useToast, type ToastStep, type ToastType } from "../../ui/Toast";
@@ -29,7 +30,14 @@ function getFlakeTemplate(appId: string, userConfig: string): string {
             xnode.xnode-config = ./xnode-config;
 
             # START USER CONFIG
-${userConfig ? userConfig.split('\n').map(line => '            ' + line).join('\n') : ''}
+${
+  userConfig
+    ? userConfig
+        .split("\n")
+        .map((line) => "            " + line)
+        .join("\n")
+    : ""
+}
             # END USER CONFIG
           }
         )
@@ -67,6 +75,7 @@ export function useInstalledApps() {
   const buildMutation = useContainerConfigBuild();
   const applyMutation = useContainerConfigApply();
   const removeMutation = useContainerRemove();
+  const setPermissionMutation = useHostPermissionContainerSet();
   const toastCtx = useToast();
 
   const installedAppIds = (listQuery.data ?? []).map((c: any) => c.id);
@@ -95,30 +104,52 @@ export function useInstalledApps() {
 
         // Step 3: Fetch user config and set flake
         toastCtx.updateToast(toastId, { currentStep: "build" });
-        
+
         let config: string;
         if (appFlake) {
           config = appFlake;
         } else {
-          const userConfig = await fetchUserConfig(appId) ?? "";
+          const userConfig = (await fetchUserConfig(appId)) ?? "";
           config = getFlakeTemplate(appId, userConfig);
         }
-        
+
         await setMutation.mutateAsync({
           client,
           path: { container: appId },
           data: textEncoder(config) as any,
         });
 
-        // Step 4: Build
+        // Grant any requested permissions
+        const permission = await xnode.container.info
+          .eval({
+            client,
+            path: { container: appId },
+            query: {
+              statement: "config.xnode.manager.permission",
+              config: true,
+            },
+          })
+          .then(JSON.parse);
+
+        if (permission.container) {
+          await setPermissionMutation.mutateAsync({
+            client,
+            path: { container: appId },
+            query: { detect_changes: true, allow_restart: true },
+            data: permission.container,
+          });
+          await new Promise((resolve) => setTimeout(resolve, 5_000));
+        }
+
+        // Step 5: Build
         const build = await buildMutation.mutateAsync({
           client,
           path: { container: appId },
           data: { after: null },
         });
-        
+
         toastCtx.updateToast(toastId, { commandId: build.id });
-        
+
         await xnode.common.utils.helpers.awaitCommand({
           client,
           command: build,
@@ -137,9 +168,9 @@ export function useInstalledApps() {
           query: { when: "Now" },
           data: { after: { Command: { id: build.id, condition: "Always" } } },
         });
-        
+
         toastCtx.updateToast(toastId, { commandId: apply.id });
-        
+
         await xnode.common.utils.helpers.awaitCommand({
           client,
           command: apply,
@@ -152,27 +183,41 @@ export function useInstalledApps() {
 
         // Complete
         toastCtx.updateToast(toastId, { currentStep: "complete" });
-        
+
         setTimeout(() => toastCtx.removeToast(toastId), 5000);
       } catch (error) {
         toastCtx.updateToast(toastId, { currentStep: "failed" });
-        
+
         try {
           await removeMutation.mutateAsync({
             client,
             path: { container: appId },
           });
         } catch {}
-        
+
         setTimeout(() => toastCtx.removeToast(toastId), 5000);
         throw error;
       }
     },
-    [client, createMutation, setMutation, buildMutation, applyMutation, removeMutation, toastCtx]
+    [
+      client,
+      createMutation,
+      setMutation,
+      buildMutation,
+      applyMutation,
+      removeMutation,
+      setPermissionMutation,
+      toastCtx,
+    ],
   );
 
   const updateApp = useCallback(
-    async (appId: string, appName: string, flakeTemplate?: string, isCustomApp?: boolean) => {
+    async (
+      appId: string,
+      appName: string,
+      flakeTemplate?: string,
+      isCustomApp?: boolean,
+    ) => {
       const toastId = toastCtx.addToast({
         type: "updating",
         appName,
@@ -182,31 +227,60 @@ export function useInstalledApps() {
 
       try {
         toastCtx.updateToast(toastId, { currentStep: "build" });
-        
+
         let config: string;
         if (isCustomApp && flakeTemplate) {
           config = flakeTemplate;
         } else {
-          const userConfig = await fetchUserConfig(appId) ?? "";
-          config = typeof flakeTemplate === "string" 
-            ? getFlakeTemplate(appId, userConfig).replace(/# START USER CONFIG[\s\S]*# END USER CONFIG/, `# START USER CONFIG\n${flakeTemplate.split('\n').map(line => '            ' + line).join('\n')}\n            # END USER CONFIG`) 
-            : getFlakeTemplate(appId, userConfig);
+          const userConfig = (await fetchUserConfig(appId)) ?? "";
+          config =
+            typeof flakeTemplate === "string"
+              ? getFlakeTemplate(appId, userConfig).replace(
+                  /# START USER CONFIG[\s\S]*# END USER CONFIG/,
+                  `# START USER CONFIG\n${flakeTemplate
+                    .split("\n")
+                    .map((line) => "            " + line)
+                    .join("\n")}\n            # END USER CONFIG`,
+                )
+              : getFlakeTemplate(appId, userConfig);
         }
-        
+
         await setMutation.mutateAsync({
           client,
           path: { container: appId },
           data: textEncoder(config) as any,
         });
 
+        // Grant any requested permissions
+        const permission = await xnode.container.info
+          .eval({
+            client,
+            path: { container: appId },
+            query: {
+              statement: "config.xnode.manager.permission",
+              config: true,
+            },
+          })
+          .then(JSON.parse);
+
+        if (permission.container) {
+          await setPermissionMutation.mutateAsync({
+            client,
+            path: { container: appId },
+            query: { detect_changes: true, allow_restart: true },
+            data: permission.container,
+          });
+          await new Promise((resolve) => setTimeout(resolve, 5_000));
+        }
+
         const build = await buildMutation.mutateAsync({
           client,
           path: { container: appId },
           data: { after: null },
         });
-        
+
         toastCtx.updateToast(toastId, { commandId: build.id });
-        
+
         await xnode.common.utils.helpers.awaitCommand({
           client,
           command: build,
@@ -224,9 +298,9 @@ export function useInstalledApps() {
           query: { when: "Now" },
           data: { after: { Command: { id: build.id, condition: "Always" } } },
         });
-        
+
         toastCtx.updateToast(toastId, { commandId: apply.id });
-        
+
         await xnode.common.utils.helpers.awaitCommand({
           client,
           command: apply,
@@ -245,7 +319,14 @@ export function useInstalledApps() {
         throw error;
       }
     },
-    [client, setMutation, buildMutation, applyMutation, toastCtx]
+    [
+      client,
+      setMutation,
+      buildMutation,
+      applyMutation,
+      setPermissionMutation,
+      toastCtx,
+    ],
   );
 
   const uninstallApp = useCallback(
@@ -271,7 +352,7 @@ export function useInstalledApps() {
         throw error;
       }
     },
-    [client, removeMutation, toastCtx]
+    [client, removeMutation, toastCtx],
   );
 
   return {

@@ -2,7 +2,7 @@ import type { ResponseResult } from "../../../common/response.js";
 import type { Bytes } from "../../../common/utils/bytes.js";
 import {
   JsonGet,
-  JsonPost,
+  RawPost,
   type WithClient,
 } from "../../../common/utils/client.js";
 import type { Permission, SetQuery } from "../models.js";
@@ -21,5 +21,5 @@ export type set_input = WithClient<{
 }>;
 export type set_output = ResponseResult<Bytes>;
 export async function set(input: set_input): Promise<set_output> {
-  return JsonPost(input, (path) => `${scope(path)}/set`);
+  return RawPost(input, (path) => `${scope(path)}/set`);
 }

@@ -575,7 +575,7 @@ async function get$1(input) {
     return JsonGet(input, (path) => `${scope$9(path)}/get`);
 }
 async function set$1(input) {
-    return JsonPost(input, (path) => `${scope$9(path)}/set`);
+    return RawPost(input, (path) => `${scope$9(path)}/set`);
 }
 
 var index$d = /*#__PURE__*/Object.freeze({

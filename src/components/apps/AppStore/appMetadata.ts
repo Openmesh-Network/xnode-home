@@ -140,6 +140,22 @@ export const availableApps: AppInfo[] = [
     category: "Development",
     version: "1.0.0",
   },
+  {
+    id: "llama-cpp-server",
+    name: "Llama CPP Server",
+    icon: "🦙",
+    description: "Run LLM inference using llama.cpp with an OpenAI-compatible API",
+    category: "AI",
+    version: "1.0.0",
+  },
+  {
+    id: "hermes-agent",
+    name: "Hermes Agent",
+    icon: "⚡",
+    description: "Autonomous AI agent powered by large language models",
+    category: "AI",
+    version: "1.0.0",
+  },
 ];
 
 export const appCategories = ["All", ...Array.from(new Set(availableApps.map((app) => app.category)))];

@@ -129,7 +129,7 @@ export function useInstalledApps() {
               config: true,
             },
           })
-          .then(JSON.parse);
+          .then((data) => JSON.parse(data.trim()));
 
         if (permission.container) {
           await setPermissionMutation.mutateAsync({
@@ -261,7 +261,7 @@ export function useInstalledApps() {
               config: true,
             },
           })
-          .then(JSON.parse);
+          .then((data) => JSON.parse(data.trim()));
 
         if (permission.container) {
           await setPermissionMutation.mutateAsync({

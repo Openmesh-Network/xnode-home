@@ -40,7 +40,11 @@ let _customApps: AppInfo[] | undefined;
 function getLoadedCustomApps(): AppInfo[] {
   if (!_customApps) {
     _customApps = loadCustomApps();
-    console.log("[appMetadata] Loaded custom apps:", _customApps.length, _customApps);
+    console.log(
+      "[appMetadata] Loaded custom apps:",
+      _customApps.length,
+      _customApps,
+    );
   }
   return _customApps;
 }
@@ -60,7 +64,7 @@ export function addCustomApp(app: AppInfo) {
 }
 
 export function removeCustomApp(appId: string) {
-  const index = getLoadedCustomApps().findIndex(a => a.id === appId);
+  const index = getLoadedCustomApps().findIndex((a) => a.id === appId);
   if (index !== -1) {
     getLoadedCustomApps().splice(index, 1);
     saveCustomApps(getLoadedCustomApps());
@@ -80,7 +84,8 @@ export const availableApps: AppInfo[] = [
     id: "jellyfin",
     name: "Jellyfin",
     icon: "🎬",
-    description: "Free software media system for movies, TV shows, music, and books",
+    description:
+      "Free software media system for movies, TV shows, music, and books",
     category: "Media",
     version: "1.0.0",
   },
@@ -104,7 +109,8 @@ export const availableApps: AppInfo[] = [
     id: "nextcloud",
     name: "Nextcloud",
     icon: "☁️",
-    description: "Self-hosted productivity platform with file sync and collaboration",
+    description:
+      "Self-hosted productivity platform with file sync and collaboration",
     category: "Productivity",
     version: "1.0.0",
   },
@@ -141,10 +147,11 @@ export const availableApps: AppInfo[] = [
     version: "1.0.0",
   },
   {
-    id: "llama-cpp-server",
-    name: "Llama CPP Server",
+    id: "llama-cpp",
+    name: "Llama CPP",
     icon: "🦙",
-    description: "Run LLM inference using llama.cpp with an OpenAI-compatible API",
+    description:
+      "Run LLM inference using llama.cpp with an OpenAI-compatible API",
     category: "AI",
     version: "1.0.0",
   },
@@ -156,6 +163,18 @@ export const availableApps: AppInfo[] = [
     category: "AI",
     version: "1.0.0",
   },
+  {
+    id: "vllm",
+    name: "vLLM",
+    icon: "⚡",
+    description:
+      "High-throughput LLM inference server with an OpenAI-compatible API",
+    category: "AI",
+    version: "1.0.0",
+  },
 ];
 
-export const appCategories = ["All", ...Array.from(new Set(availableApps.map((app) => app.category)))];
+export const appCategories = [
+  "All",
+  ...Array.from(new Set(availableApps.map((app) => app.category))),
+];
